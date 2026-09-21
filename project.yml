@@ -1,0 +1,82 @@
+name: WUUT
+
+options:
+  bundleIdPrefix: com.wuut
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    # Language mode 5 on purpose: keeps Swift 6 strict-concurrency diagnostics as
+    # warnings rather than errors. This project is written without a compiler to
+    # hand, so a warning you can read beats a build you cannot start.
+    SWIFT_VERSION: "5.0"
+    SWIFT_STRICT_CONCURRENCY: minimal
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_USER_SCRIPT_SANDBOXING: "YES"
+    SWIFT_EMIT_LOC_STRINGS: "YES"
+
+targets:
+  WUUT:
+    type: application
+    platform: iOS
+    sources:
+      - path: WUUT
+    dependencies:
+      - target: WUUTWidgets
+        embed: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.wuut.app
+        PRODUCT_NAME: WUUT
+        GENERATE_INFOPLIST_FILE: "NO"
+        INFOPLIST_FILE: WUUT/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1"
+
+  WUUTWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: WUUTWidgets
+      # Shared verbatim with the app target: the Live Activity payload type has
+      # to be identical on both sides or ActivityKit cannot decode it.
+      - path: WUUT/Shared/ActivityAttributes.swift
+      - path: WUUT/Shared/Formatters.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.wuut.app.widgets
+        PRODUCT_NAME: WUUTWidgets
+        GENERATE_INFOPLIST_FILE: "NO"
+        INFOPLIST_FILE: WUUTWidgets/Info.plist
+        SKIP_INSTALL: "YES"
+        TARGETED_DEVICE_FAMILY: "1"
+
+  WUUTTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: WUUTTests
+    dependencies:
+      - target: WUUT
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: "YES"
+
+schemes:
+  WUUT:
+    build:
+      targets:
+        WUUT: all
+        WUUTWidgets: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: true
+      targets:
+        - WUUTTests

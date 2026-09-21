@@ -7,7 +7,8 @@ argue with.
 
 It is not a diary. Entries are short, factual and written to be counted, not reread.
 
-**Status:** specification, agreed 2026-09-21. No code written yet.
+**Status:** implemented 2026-09-21, not yet compiled. Written without access to Xcode — see §12.
+Build instructions are in [docs/SETUP.md](docs/SETUP.md).
 
 ---
 
@@ -95,20 +96,21 @@ Slot
   startAt     Date
   endAt       Date            // explicit — stubs are honest
   text        String?
-  category    Category?
-  tags        [Tag]
+  category    LogCategory?
+  tagKeys     [String]        // inline, not a join — see below
   state       SlotState
   loggedAt    Date?
   source      EntrySource
   day         Day
 
-Category
-  id         UUID
-  name       String
-  colorHex   String
-  symbolName String           // SF Symbol
-  sortOrder  Int
-  isArchived Bool             // archive, never delete — history must stay readable
+LogCategory                  // named `LogCategory` in code, to stay clear of type
+  id           UUID           // names in Charts and UIKit
+  name         String
+  colorHex     String         // light appearance
+  colorHexDark String         // dark appearance — see §4.1
+  symbolName   String         // SF Symbol
+  sortOrder    Int
+  isArchived   Bool           // archive, never delete — history must stay readable
 
 Tag
   id          UUID
@@ -133,6 +135,11 @@ EntrySource = notification | app | backfill | blockOut | siri
 
 `Slot.durationMinutes` is computed from the timestamps. Nothing else is allowed to assume 15.
 
+Tags are stored inline on the slot as normalised keys rather than as a SwiftData many-to-many
+relationship. At 64 slots a day the join buys nothing, it makes export trivial, and it removes
+the one relationship shape most likely to misbehave. The `Tag` model remains as an index over
+those keys, used to rank autocomplete and the week's top-tags list.
+
 ### 4.1 Seeded categories
 
 Editable and reorderable in Settings; archived rather than deleted so old entries keep meaning.
@@ -142,6 +149,21 @@ Errands · Eating · Family & friends · Travel · Rest
 
 `Unaccounted` is not a category. It is the absence of a logged slot, computed from `SlotState`,
 so it can never be assigned by hand.
+
+**On the colours.** These were checked with a palette validator rather than chosen by eye, for
+lightness band, chroma floor, colour-blind separation and contrast against the surface, in both
+appearances. The first attempt had two faults worth recording: Work and Meetings were six units
+apart, effectively the same colour for the two categories a working day is mostly made of; and
+four categories read as grey, which is reserved here for unaccounted time.
+
+Each category therefore carries **two** hexes. Dark mode is not a lightening of light mode —
+the usable lightness band on a dark surface is narrower, so a flipped colour either loses
+contrast or blows out.
+
+Fourteen hues cannot all be mutually distinguishable, particularly in dark mode. Rather than
+cut the list, **no chart in this app identifies a category by colour alone** — every bar, chip
+and legend row carries the category's symbol and name. That constraint is what drove the week
+view's form; see §7.6.
 
 ---
 
@@ -279,9 +301,19 @@ to set them from (§11).
 
 ### 7.6 Week
 
-Seven stacked bars of category minutes, tappable through to a day. Below: category totals in
-minutes and percent with an Unaccounted row, and a top-tags list for the week. All
-duration-weighted.
+Two charts, each answering one question, rather than one chart trying to answer both. The
+originally sketched fourteen-colour stacked bar was abandoned: no palette makes fourteen
+adjacent segments legible, and the colour work in §4.1 proved it rather than assuming it.
+
+- **Per day** — how much of each day did you account for? Seven bars, two stacked series,
+  logged and not logged, so a bar's full height is the time the day actually covered and the
+  grey remainder is the honest gap. One question, two colours, nothing to get wrong. Rows
+  beneath it navigate into a day.
+- **By category** — where did the week go? A bar list sorted by duration, each row carrying its
+  own symbol, name, duration and share. Identity comes from the label, so fourteen categories
+  stay readable and the colour is reinforcement.
+
+Below those, the week's top tags. Everything duration-weighted.
 
 ---
 
@@ -377,9 +409,20 @@ consistency nudges. Setting a social media budget before you know your real numb
 
 ---
 
-## 12. How this gets built
+## 12. How this was built
 
-Written on Linux, with no ability to compile or run. Swift will be correct by construction where
-I can manage it, but **expect the first build to surface some errors** — paste them and I will
-fix them. The pure-logic tests exist partly so that the parts which must be right can be verified
-without me.
+Written on Linux, with no ability to compile or run it. **Expect the first build to surface
+some errors** — most likely argument labels or a SwiftUI modifier that has moved. Paste them
+and they can be fixed directly. [docs/SETUP.md](docs/SETUP.md) has the build steps and the
+four free-account behaviours to verify on device.
+
+The project is generated by [XcodeGen](https://github.com/yonaskolb/XcodeGen) from
+`project.yml` rather than shipping a `.xcodeproj`. A hand-written project file is a thousand
+lines of UUID-keyed plist, and a subtly wrong one refuses to open at all — not a good bet
+without the ability to open it.
+
+`WUUTTests` covers the logic where a bug would quietly corrupt history rather than crash:
+quarter-hour arithmetic including a DST transition, the stub rules at both ends of a day, days
+that run past midnight, the exact minute a backfill window expires, duration-weighted totals,
+and the notification identifier round-trip that a banner reply depends on. It needs no
+simulator and runs in seconds.

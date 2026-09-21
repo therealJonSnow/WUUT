@@ -10,16 +10,36 @@ Private, local-only, single user. Not published to the App Store.
 
 ## Status
 
-Specification agreed. No code yet. See **[SPEC.md](SPEC.md)**.
+v1 is written but has never been compiled — it was built without access to Xcode, so expect a
+few errors on the first build. See [SPEC §12](SPEC.md).
 
-## Building and installing (once the code exists)
+- **[SPEC.md](SPEC.md)** — the design, and why each decision went the way it did
+- **[docs/SETUP.md](docs/SETUP.md)** — how to build it, sign it and get it on the phone
 
-Requires a Mac with Xcode, and an iPhone on iOS 18 or later.
+## Building
 
-1. Open `WUUT.xcodeproj`.
-2. Select your Apple ID under Signing & Capabilities and set a unique bundle identifier.
-3. Plug in the iPhone (or pair it over the local network) and hit Run.
+Requires a Mac with Xcode and an iPhone on iOS 18 or later. Nothing costs money.
 
-**On a free Apple ID the app stops launching after 7 days.** Re-run from Xcode to refresh it —
-about a minute, and your data survives as long as you don't delete the app. Set up the automatic
-weekly backup on first launch anyway; see [SPEC.md §8](SPEC.md).
+```sh
+brew install xcodegen
+xcodegen generate
+open WUUT.xcodeproj
+```
+
+The `.xcodeproj` is generated rather than committed. Full instructions, including signing and
+the manual alternative to XcodeGen, are in [docs/SETUP.md](docs/SETUP.md).
+
+**On a free Apple ID the app stops launching after 7 days.** Re-running from Xcode refreshes it
+in about a minute and your data survives — but set up the automatic weekly backup on day one
+anyway, because deleting the app does not.
+
+## How it works
+
+- Tap **Start the day**. The first slot runs from that moment to the next quarter hour; every
+  slot after it is aligned to :00, :15, :30, :45.
+- At each boundary a notification asks what you were up to, with two follow-ups after it. You
+  can **reply straight from the banner**, or tap "Same as last" to copy the previous entry.
+- Miss some? They stay fillable for two hours through a catch-up flow, then lock permanently as
+  **unaccounted** and show up in the metrics as lost time.
+- Going into a meeting? **Block out** the next hour and it fills those slots and stops asking.
+- At the end of the day one notification gives you the numbers. The Week tab gives you the rest.
