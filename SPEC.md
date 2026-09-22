@@ -344,8 +344,15 @@ The app is now drawn as what its own first paragraph says it is: **a ledger, not
 - **Serif for what you wrote, monospace for what the clock says.** Times and durations are
   data and line up in a fixed column; entries are prose and read like it.
 - **Flat, ruled panels** rather than floating rounded cards. This is a page.
-- **Violet is reserved.** It rules the page and it marks time you failed to account for. No
-  category may claim it, and the seeded set excludes a band of hues either side of it.
+- **Violet is reserved.** It rules the page, it marks time you failed to account for, and it
+  is the app's accent. No category may claim it, and the seeded set excludes a band of hues
+  either side of it.
+- **The accent is wired in two places**, because one does not cover the other: `.tint()` on
+  the root view for the SwiftUI tree, and `AccentColor` in the asset catalog
+  (`ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME`) for controls presented by UIKit, such as
+  the document picker behind Backup and export. Without both, the tab bar and the pickers
+  keep resolving to Apple's default blue — the redesign removed that blue from every surface
+  it drew by hand, but a stock control has no way of knowing.
 
 **The inversion is the point.** Logged time is quiet — it is finished and wants nothing from
 you. Unaccounted time is the loudest thing on the screen: a violet plate struck through with

@@ -38,8 +38,10 @@ bare `xcodebuild`, whose output is thousands of lines of noise.
 - **Light appearance only.** The app forces `.preferredColorScheme(.light)`. Don't add dark
   styling piecemeal; dark mode is a separate design (SPEC §7.7 and §11). `colorHexDark` is
   dead schema kept to avoid a migration — nothing reads it.
-- **Violet is reserved** for the ruling and for unaccounted time. No category, button or
-  accent may use it.
+- **Violet is reserved** for the ruling, for unaccounted time, and for the app's accent —
+  it is the `.tint()` and the asset catalog's `AccentColor`, so every system control the
+  design does not draw by hand lands on it rather than Apple's blue. No category may claim
+  it, and the seeded set excludes a band of hues either side.
 - **No chart may identify a category by colour alone.** The seeded set's weakest pair is
   ΔE 7.7 normal / 1.4 simulated-CVD: fourteen categories cannot be separated by colour, and
   no palette fixes it. Every bar, chip and legend row carries the symbol and name. Validate
