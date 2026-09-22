@@ -167,6 +167,15 @@ struct WeekView: View {
             .sorted { $0.minutes > $1.minutes }
     }
 
+    /// Every slot in the displayed week, for the figures that look at entries rather than
+    /// at days.
+    private func weekSlots() -> [Slot] {
+        let interval = weekInterval
+        return dayController.allDays()
+            .filter { $0.date >= calendar.startOfDay(for: interval.start) && $0.date < interval.end }
+            .flatMap { $0.slots }
+    }
+
     private func topTags() -> [(key: String, minutes: Int)] {
         let interval = weekInterval
         let days = dayController.allDays().filter {
@@ -357,6 +366,63 @@ struct WeekView: View {
         .padding(16)
         .background(Theme.card)
         .overlay(Rectangle().strokeBorder(Theme.rule, lineWidth: 1))
+    }
+
+    /// How the week's record came to exist, and how promptly you answered.
+    ///
+    /// The accounted percentage flatters you on its own: a week that is mostly reconstructed
+    /// is a week you remembered rather than recorded, and the headline figure cannot tell
+    /// you which you had. Drawn without colour coding — three labelled rows need no palette,
+    /// and violet is spoken for.
+    @ViewBuilder
+    private func provenanceCard() -> some View {
+        let slots = weekSlots()
+        let totals = DayStatistics.minutesByProvenance(in: slots)
+        let total = totals.values.reduce(0, +)
+
+        if total > 0 {
+            VStack(alignment: .leading, spacing: 10) {
+                Marginalia("How it was written", color: Theme.ink2, weight: .bold)
+
+                ForEach(DayStatistics.Provenance.allCases, id: \.self) { provenance in
+                    let minutes = totals[provenance] ?? 0
+                    if minutes > 0 {
+                        HStack(spacing: 8) {
+                            Text(provenance.label)
+                                .font(Theme.serif(13))
+                                .foregroundStyle(Theme.ink2)
+                            Spacer()
+                            Text(Formatters.percent(Double(minutes) / Double(total)))
+                                .font(Theme.mono(11))
+                                .foregroundStyle(Theme.ink3)
+                            Text(Formatters.duration(minutes: minutes))
+                                .font(Theme.mono(11, .bold))
+                                .foregroundStyle(Theme.ink)
+                                .frame(minWidth: 54, alignment: .trailing)
+                        }
+                    }
+                }
+
+                // Blocked-out slots are excluded upstream, so this measures replies to
+                // prompts rather than predictions you let stand.
+                if let median = DayStatistics.medianResponseMinutes(in: slots) {
+                    Rule()
+                        .padding(.vertical, 2)
+                    HStack {
+                        Text("Typical reply delay")
+                            .font(Theme.serif(13))
+                            .foregroundStyle(Theme.ink2)
+                        Spacer()
+                        Text(median == 0 ? "Within the slot" : Formatters.duration(minutes: median))
+                            .font(Theme.mono(11, .bold))
+                            .foregroundStyle(Theme.ink)
+                    }
+                }
+            }
+            .padding(16)
+            .background(Theme.card)
+            .overlay(Rectangle().strokeBorder(Theme.rule, lineWidth: 1))
+        }
     }
 
     @ViewBuilder
