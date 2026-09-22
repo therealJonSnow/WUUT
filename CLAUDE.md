@@ -12,6 +12,10 @@ gitignored. Pure logic lives in `WUUT/Services` and `WUUT/Shared` and is covered
 Live Activity only — there is no home screen widget, and cannot be one (see below).
 `docs/SETUP.md` is the build and install guide.
 
+**On a Mac with Xcode**, build with `./scripts/build.sh` (or `./scripts/build.sh test`), which
+prints only the unique error lines and writes the full log to `build.log`. Prefer it over a
+bare `xcodebuild`, whose output is thousands of lines of noise.
+
 ## Constraints that are easy to forget
 
 - **Cannot build or test here.** This repo is worked on from Linux; there is no Xcode. Swift is

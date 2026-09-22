@@ -104,9 +104,24 @@ logged day, something is wrong.
 This project was written without a compiler to hand, so expect a few errors on the first
 build — most likely wrong argument labels or a SwiftUI modifier that has moved.
 
-Paste the errors from Xcode's issue navigator (the text, not a screenshot) and they can be
-fixed directly. Start with `Product → Build` rather than Run, and work down the list from the
-top: one bad type early on tends to produce a dozen misleading errors after it.
+The quickest way to get them out of Xcode as text:
+
+```sh
+./scripts/build.sh          # build for device, print only the errors
+./scripts/build.sh test     # build and run the unit tests on a simulator
+```
+
+It writes the full log to `build.log` and prints just the unique error lines, which is what
+you want to paste into a conversation. Work down the list from the top: one bad type early on
+tends to produce a dozen misleading errors after it.
+
+Better still, run Claude Code on the Mac itself (`npm install -g @anthropic-ai/claude-code`,
+then `claude` in this directory). It can run the script, read the errors and fix them without
+anything being copied by hand. `CLAUDE.md` in the repository root orients a fresh session on
+the constraints that matter.
+
+To copy errors out of Xcode's own UI instead: **⌘5** for the issue navigator, click a row,
+**⌘A**, **⌘C**.
 
 Run the tests too — `Product → Test`. They cover slot generation, the stub rules, days that
 run past midnight, DST, backfill expiry and duration-weighted totals, and they need no
