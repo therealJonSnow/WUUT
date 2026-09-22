@@ -88,7 +88,7 @@ struct BackupSettingsView: View {
                 Section {
                     Text(message)
                         .font(.footnote)
-                        .foregroundStyle(isError ? .red : .secondary)
+                        .foregroundStyle(isError ? Color.red : Color.secondary)
                 }
             }
         }

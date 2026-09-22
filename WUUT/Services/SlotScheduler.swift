@@ -74,10 +74,16 @@ public struct SlotScheduler {
     /// to be worth keeping — in which case the day simply ends at the previous boundary.
     public func truncation(dayStart: Date, endingAt end: Date) -> SlotPlan? {
         guard end > dayStart else { return nil }
-        let plans = slots(dayStart: dayStart, through: end)
+        var plans = slots(dayStart: dayStart, through: end)
+
+        // `end` landed exactly on a boundary, so `slots` has just opened a fresh slot that
+        // ran for no time at all. Drop it: the day's final slot is the whole one before it.
+        if let last = plans.last, end == last.startAt, plans.count > 1 {
+            plans.removeLast()
+        }
         guard let last = plans.last else { return nil }
 
-        // `end` landed exactly on a boundary: the final slot is already whole.
+        // The final slot is already whole, with nothing to truncate.
         if end >= last.endAt { return last }
 
         let truncated = SlotPlan(startAt: last.startAt, endAt: end)

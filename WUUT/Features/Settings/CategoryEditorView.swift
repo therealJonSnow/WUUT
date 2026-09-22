@@ -175,7 +175,7 @@ private struct CategoryDetailView: View {
                                         : Color.secondary.opacity(0.1),
                                     in: RoundedRectangle(cornerRadius: 9)
                                 )
-                                .foregroundStyle(category.symbolName == symbol ? category.color : .secondary)
+                                .foregroundStyle(category.symbolName == symbol ? category.color : Color.secondary)
                         }
                         .buttonStyle(.plain)
                     }

@@ -140,7 +140,7 @@ struct SlotRow: View {
         case .pending:
             Text(isInProgress ? "In progress" : "Not logged yet")
                 .font(.subheadline)
-                .foregroundStyle(isInProgress ? .secondary : .orange)
+                .foregroundStyle(isInProgress ? Color.secondary : Color.orange)
 
         case .unaccounted:
             HStack(spacing: 5) {

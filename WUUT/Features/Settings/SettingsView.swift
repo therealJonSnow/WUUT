@@ -114,12 +114,12 @@ struct SettingsView: View {
         Section {
             LabeledContent("Notifications") {
                 Text(authorizationLabel)
-                    .foregroundStyle(authorizationStatus == .authorized ? .secondary : .red)
+                    .foregroundStyle(authorizationStatus == .authorized ? Color.secondary : Color.red)
             }
             LabeledContent("Prompts scheduled") {
                 Text("\(pendingPromptCount) of \(NotificationScheduler.platformPendingLimit)")
                     .monospacedDigit()
-                    .foregroundStyle(pendingPromptCount > 60 ? .red : .secondary)
+                    .foregroundStyle(pendingPromptCount > 60 ? Color.red : Color.secondary)
             }
             LabeledContent("Window") {
                 Text("\(windowSlots) slots")
