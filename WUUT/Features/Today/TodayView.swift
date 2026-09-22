@@ -316,7 +316,14 @@ private struct DayHeaderView: View {
                 Text("\(Formatters.duration(minutes: day.loggedMinutes)) logged")
                     .font(Theme.mono(10))
                     .foregroundStyle(Theme.ink2)
-                if let started = day.startedAt {
+
+                // A total hides the shape of a day: one ninety-minute hole and six
+                // scattered quarter hours read the same until you say which it was.
+                if day.longestGapMinutes >= 30 {
+                    Text("· longest gap \(Formatters.duration(minutes: day.longestGapMinutes))")
+                        .font(Theme.mono(10))
+                        .foregroundStyle(Theme.violet)
+                } else if let started = day.startedAt {
                     Text("· started \(Formatters.time(started))")
                         .font(Theme.mono(10))
                         .foregroundStyle(Theme.ink3)

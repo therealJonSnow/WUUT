@@ -26,7 +26,13 @@ bare `xcodebuild`, whose output is thousands of lines of noise.
 - **Free Apple ID (Personal Team).** No App Groups, no CloudKit, no remote push — so no home
   screen widget and no cloud sync. Don't propose them as if they were available. See SPEC §9.
 - **64 pending local notifications, hard limit.** Never schedule a whole day at once. The rolling
-  18-slot window in `NotificationScheduler` exists for this reason. See SPEC §5.1.
+  18-slot window in `NotificationScheduler` exists for this reason. See SPEC §5.1. Current
+  budget: 54 prompts + summary + block-end + start reminder = 57. Anything new must fit in
+  the remaining 7, or the window shrinks to pay for it.
+- **The start-of-day reminder is one repeating request**, live only while no day is running.
+  Don't convert it to one-per-day — that costs seven slots of the budget above.
+- **Derived figures live in `DayStatistics`**, pure and tested: longest gap, provenance
+  split, response delays, period comparison. Add new metrics there, not inline in a view.
 - **Slots are timestamps, not indices.** The first and last slot of a day are short stubs, so
   every aggregate must be duration-weighted. Nothing may assume 15 minutes. See SPEC §3.
 - **A logical day is not a calendar day.** It can run past midnight. `Day.date` is the logical
@@ -56,7 +62,11 @@ Deciding these again wastes time; if one needs revisiting, say so explicitly.
 - Backfill window then permanent lock — a reversible lock invites retrospective fiction.
 - Block out ahead rather than snooze — one suppression mechanism, and it captures what you did.
 - Fixed categories plus freeform tags — clean charts without losing detail.
-- End-of-day summary as the only nudge in v1 — caps and targets need real data first.
+- End-of-day summary as the only nudge in v1 — caps and targets need real data first. The
+  start-of-day reminder is not a nudge about *content*; it exists because forgetting to start
+  loses a whole day.
+- Every headline percentage carries a comparison with the previous period, or stays silent.
+  A percentage alone says nothing, and inventing a baseline from an empty week is worse.
 - Logbook visual direction: ivory paper, violet ruling, serif prose, mono times, flat ruled
   panels. Logged time is quiet, unaccounted time is loud — that inversion is the argument,
   so don't "tidy" missing time into something recessive.

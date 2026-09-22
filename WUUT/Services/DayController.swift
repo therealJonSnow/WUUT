@@ -75,6 +75,7 @@ public final class DayController {
         activities.adoptExisting()
         loadActiveDay()
         reconcile()
+        refreshStartReminder()
     }
 
     private func seedCategoriesIfNeeded() {
@@ -132,6 +133,7 @@ public final class DayController {
             activities.start(dayStart: now, state: state)
         }
         refreshPrompts(for: day, now: now)
+        refreshStartReminder(now: now)
     }
 
     /// Closes the day.
@@ -186,6 +188,7 @@ public final class DayController {
         save()
 
         activeDay = nil
+        refreshStartReminder(now: now)
     }
 
     // MARK: - Reconciliation
@@ -249,9 +252,35 @@ public final class DayController {
 
     private func refreshPrompts(for day: Day, now: Date) {
         let promptable = reconciler.promptableSlots(in: day.slots, now: now)
+        let backlog = reconciler.fillableSlots(in: day.slots, now: now).count
+        let last = lastLoggedText(in: day)
         let cal = calendar(for: day)
         Task {
-            await notifications.refreshPrompts(for: promptable, now: now, calendar: cal)
+            await notifications.refreshPrompts(
+                for: promptable,
+                now: now,
+                calendar: cal,
+                lastEntry: last,
+                backlogCount: backlog
+            )
+        }
+    }
+
+    /// The most recent entry's text, truncated for a notification body.
+    private func lastLoggedText(in day: Day) -> String? {
+        day.orderedSlots
+            .last { $0.state == .logged && $0.text?.isEmpty == false }?
+            .text
+            .map { $0.count > 48 ? String($0.prefix(47)) + "…" : $0 }
+    }
+
+    /// Keeps the "start the day?" reminder in step. Forgetting to start costs a whole day
+    /// silently, which is a worse failure than missing any single quarter hour.
+    private func refreshStartReminder(now: Date = .now) {
+        let active = activeDay != nil
+        let cal = calendar(for: activeDay)
+        Task {
+            await notifications.refreshStartReminder(dayIsActive: active, calendar: cal)
         }
     }
 
@@ -505,18 +534,33 @@ public final class DayController {
             .text
 
         let block = currentBlockOut(now: now)
+        let fillable = reconciler.fillableSlots(in: day.slots, now: now)
+
+        // The button acts on the oldest slot still waiting, falling back to the one running.
+        let actionable = fillable.first ?? current
+        let canRepeat = previousLoggedSlot(before: actionable) != nil
 
         return WUUTActivityAttributes.ContentState(
             slotStart: current.startAt,
             slotEnd: current.endAt,
-            unloggedCount: reconciler.fillableSlots(in: day.slots, now: now).count,
+            unloggedCount: fillable.count,
             lastEntry: lastEntry.map { String($0.prefix(60)) },
             blockedUntil: block?.endAt,
-            blockedLabel: block?.text
+            blockedLabel: block?.text,
+            accountedPercent: Int((day.accountedFraction * 100).rounded()),
+            unaccountedMinutes: day.unaccountedMinutes,
+            actionableSlotID: canRepeat ? actionable.id.uuidString : nil
         )
     }
 
     // MARK: - Summary
+
+    /// The most recent day before `day` that actually recorded something.
+    public func previousLoggedDay(before day: Day) -> Day? {
+        allDays()
+            .filter { $0.date < day.date && ($0.loggedMinutes + $0.unaccountedMinutes) > 0 }
+            .max { $0.date < $1.date }
+    }
 
     public struct DaySummary {
         public let title: String
@@ -539,10 +583,23 @@ public final class DayController {
                 return "\(name) \(Formatters.duration(minutes: entry.value))"
             }
 
-        let title = "\(Formatters.percent(day.accountedFraction)) accounted for"
+        // A percentage on its own says nothing. Comparison is the whole point of keeping
+        // the record, so the headline carries it whenever there is a day to compare to.
+        var title = "\(Formatters.percent(day.accountedFraction)) accounted for"
+        if let change = DayStatistics.percentagePointChange(
+            from: previousLoggedDay(before: day)?.accountedFraction,
+            to: day.accountedFraction
+        ), change != 0 {
+            title += change > 0 ? ", up \(change) points" : ", down \(-change) points"
+        }
+
         var parts: [String] = ["\(Formatters.duration(minutes: logged)) logged"]
         if unaccounted > 0 {
             parts.append("\(Formatters.duration(minutes: unaccounted)) unaccounted")
+            let gap = day.longestGapMinutes
+            if gap >= 30 {
+                parts.append("longest gap \(Formatters.duration(minutes: gap))")
+            }
         }
         if !totals.isEmpty {
             parts.append(totals.joined(separator: ", "))

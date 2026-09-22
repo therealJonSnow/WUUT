@@ -1,4 +1,5 @@
 import ActivityKit
+import AppIntents
 import SwiftUI
 import WidgetKit
 
@@ -26,8 +27,8 @@ struct WUUTLiveActivity: Widget {
                         .foregroundStyle(.primary)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    CountdownText(state: context.state)
-                        .font(Theme.mono(12, .bold))
+                    Text("\(context.state.accountedPercent)%")
+                        .font(Theme.mono(13, .bold))
                         .foregroundStyle(context.state.unloggedCount > 0 ? Theme.rule : .secondary)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
@@ -35,6 +36,16 @@ struct WUUTLiveActivity: Widget {
                         Text(label)
                             .font(Theme.serif(13))
                             .lineLimit(1)
+                    } else if context.state.unloggedCount > 0,
+                              let slotID = context.state.actionableSlotID,
+                              let last = context.state.lastEntry {
+                        Button(intent: LogSameAsLastIntent(slotID: slotID)) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "arrow.turn.up.left").font(.caption2)
+                                Text(last).font(Theme.serif(13)).lineLimit(1)
+                            }
+                        }
+                        .buttonStyle(.bordered)
                     } else if context.state.unloggedCount > 0 {
                         UnloggedLine(count: context.state.unloggedCount, onDark: true)
                     } else if let last = context.state.lastEntry {
@@ -86,8 +97,13 @@ private struct LockScreenView: View {
 
                 Spacer()
 
+                // How the day is going, not just when the next prompt lands.
+                Text("\(state.accountedPercent)%")
+                    .font(Theme.serif(17, .bold))
+                    .foregroundStyle(state.unloggedCount > 0 ? Theme.violet : Theme.ink)
+
                 CountdownText(state: state)
-                    .font(Theme.mono(15, .bold))
+                    .font(Theme.mono(13))
                     .foregroundStyle(Theme.ink2)
             }
 
@@ -129,6 +145,27 @@ private struct LockScreenView: View {
                         .frame(height: 16)
                 }
                 .padding(.top, 10)
+
+                // One tap, phone still locked. The lowest-friction path in the app.
+                if let slotID = state.actionableSlotID, let last = state.lastEntry {
+                    Button(intent: LogSameAsLastIntent(slotID: slotID)) {
+                        HStack(spacing: 7) {
+                            Image(systemName: "arrow.turn.up.left").font(.caption2)
+                            Text(last)
+                                .font(Theme.serif(13))
+                                .lineLimit(1)
+                            Spacer(minLength: 0)
+                        }
+                        .foregroundStyle(Theme.ink)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .frame(maxWidth: .infinity)
+                        .background(Theme.card)
+                        .overlay(Rectangle().strokeBorder(Theme.ink, lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 9)
+                }
             } else {
                 Marginalia("All accounted for", color: Theme.ink3, size: 9)
                     .padding(.top, 10)

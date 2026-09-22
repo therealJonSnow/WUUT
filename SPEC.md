@@ -201,6 +201,17 @@ three prompts each that is 192 requests, and iOS silently keeps only the 64 soon
 (the response handler runs the app briefly, which is the common case), Start/End the Day,
 creating or cancelling a block-out, and a `BGAppRefreshTask` as a backstop.
 
+### 5.1a The start-of-day reminder
+
+A daily reminder at a time you set (07:00 by default), scheduled only while **no** day is
+running and removed the moment one starts.
+
+This closes the app's worst failure mode. Missing a slot costs fifteen minutes; forgetting to
+tap Start the Day costs the whole day, silently — no prompts, no Live Activity, no summary —
+and it is the more likely mistake, because you are not thinking about the app when you wake
+up. One repeating calendar request rather than one per day, since the 64-request ceiling is
+mostly spent on the prompt window.
+
 ### 5.2 Per-slot escalation
 
 For a slot ending at time `q`, three requests fire at `q`, `q+5min`, `q+11min`:
@@ -257,7 +268,18 @@ Starts at Start the Day, ends at End the Day.
 **Lock screen shows:** the current slot window, a live countdown to the boundary, the number of
 slots awaiting backfill, and the last logged entry truncated to one line.
 
-**Dynamic Island:** compact shows the unlogged count; expanded matches the lock screen.
+It also carries **the day's accounted percentage** — the countdown says when the next prompt
+lands, the percentage says whether you are winning — and, when a slot is waiting and there is
+something to repeat, **a button that logs "same as last" without unlocking the phone**. That
+button is the lowest-friction path in the app, and friction is the whole game.
+
+The button is a `LiveActivityIntent`, which needs no paid entitlement. It is compiled into
+both targets because the widget needs the type to build the button while iOS performs it in
+the app's process; the work sits behind `WUUTIntentHandler`, of which each target has its own
+copy and the widget's does nothing.
+
+**Dynamic Island:** compact shows the unlogged count; expanded carries the percentage and the
+same button.
 
 Two implementation details that matter:
 
@@ -307,10 +329,18 @@ minute, because that is the realistic failure mode.
 - The Live Activity shows "Blocked until 10:00".
 - One notification when the block ends, so you resume logging rather than drifting.
 
+### 7.4a What Today shows beyond the timeline
+
+Alongside the accounted percentage and the strip, the header reports **the longest unbroken
+gap** once it reaches half an hour. A total hides the shape of a day: one ninety-minute hole
+and six scattered quarter hours both read as "1h 30m", and only one of them is a day you
+should worry about.
+
 ### 7.5 End of day
 
 End the Day truncates the current slot, ends the Live Activity, and delivers a summary
-notification: category breakdown and accounted percentage. This is the only nudge in v1 — real
+notification: accounted percentage with its change against the previous recorded day, logged
+and unaccounted totals, the longest gap when it is substantial, and the top categories. This is the only nudge in v1 — real
 numbers, once a day, with nothing to configure. Targets and caps come later, once there is data
 to set them from (§11).
 
@@ -328,7 +358,17 @@ adjacent segments legible, and the colour work in §4.1 proved it rather than as
   own symbol, name, duration and share. Identity comes from the label, so fourteen categories
   stay readable and the colour is reinforcement.
 
-Below those, the week's top tags. Everything duration-weighted.
+Below those, **how the record was written** — live, blocked out, or reconstructed — with the
+typical reply delay, and the week's top tags. Everything duration-weighted.
+
+The provenance split is the honesty check on your own data: a week that is mostly
+reconstructed is a week you largely remembered rather than recorded, and you should be able to
+see that rather than read a percentage that implies otherwise.
+
+Each headline percentage carries **a comparison with the period before it** — "up 8 points on
+last week" — or stays silent when there is nothing to compare against. A percentage in
+isolation says nothing; the comparison is the only thing on either screen that answers whether
+any of this is working.
 
 ### 7.7 Visual design — the Logbook
 

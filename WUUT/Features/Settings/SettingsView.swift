@@ -14,6 +14,8 @@ struct SettingsView: View {
     @AppStorage(SettingsKey.minimumStubMinutes) private var minimumStub = 3
     @AppStorage(SettingsKey.backfillWindowMinutes) private var backfillWindow = 120
     @AppStorage(SettingsKey.autoEndHour) private var autoEndHour = 2
+    @AppStorage(SettingsKey.startReminderEnabled) private var startReminder = true
+    @AppStorage(SettingsKey.startReminderHour) private var startReminderHour = 7
 
     @State private var pendingPromptCount = 0
     @State private var authorizationStatus: UNAuthorizationStatus = .notDetermined
@@ -30,6 +32,8 @@ struct SettingsView: View {
             .logbookSurface()
             .logbookBars("Settings")
             .task { await refreshDiagnostics() }
+        .onChange(of: startReminder) { _, _ in resyncStartReminder() }
+        .onChange(of: startReminderHour) { _, _ in resyncStartReminder() }
         }
     }
 
@@ -68,6 +72,14 @@ struct SettingsView: View {
                 Text("2 hours").tag(120)
                 Text("4 hours").tag(240)
             }
+            Toggle("Remind me to start", isOn: $startReminder)
+            if startReminder {
+                Picker("Remind me at", selection: $startReminderHour) {
+                    ForEach(4..<13, id: \.self) { hour in
+                        Text(String(format: "%02d:00", hour)).tag(hour)
+                    }
+                }
+            }
             Picker("Close a forgotten day at", selection: $autoEndHour) {
                 ForEach([0, 1, 2, 3, 4, 5], id: \.self) { hour in
                     Text(String(format: "%02d:00", hour)).tag(hour)
@@ -82,6 +94,10 @@ struct SettingsView: View {
 
                 After the backfill window a slot locks as unaccounted and cannot be edited. \
                 That is deliberate: a lock you can undo is not a lock.
+
+                The reminder only fires on a morning when nothing is being recorded yet — \
+                forgetting to start costs a whole day, which is worse than missing any one \
+                quarter hour.
                 """)
         }
         .logbookRow()
@@ -159,6 +175,16 @@ struct SettingsView: View {
         case .notDetermined: return "Not asked yet"
         case .ephemeral: return "Ephemeral"
         @unknown default: return "Unknown"
+        }
+    }
+
+    /// The reminder is a scheduled request, so changing the setting has to re-schedule it.
+    private func resyncStartReminder() {
+        Task {
+            await AppContainer.shared.notifications.refreshStartReminder(
+                dayIsActive: dayController.activeDay != nil,
+                calendar: .current
+            )
         }
     }
 

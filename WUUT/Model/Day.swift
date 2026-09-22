@@ -107,6 +107,21 @@ public final class Day {
         return totals
     }
 
+    /// The longest unbroken stretch of unaccounted time. See `DayStatistics`.
+    public var longestGapMinutes: Int {
+        DayStatistics.longestGapMinutes(in: slots)
+    }
+
+    /// Median minutes between a slot closing and you answering it.
+    public var medianResponseMinutes: Int? {
+        DayStatistics.medianResponseMinutes(in: slots)
+    }
+
+    /// Minutes split by how the entry came to exist — live, blocked out, reconstructed.
+    public func minutesByProvenance() -> [DayStatistics.Provenance: Int] {
+        DayStatistics.minutesByProvenance(in: slots)
+    }
+
     /// Logged minutes with no category assigned — usually banner replies the suggester
     /// couldn't place. Surfaced in the UI so they can be cleared in a batch.
     public var uncategorisedMinutes: Int {

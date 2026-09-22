@@ -14,6 +14,9 @@ public enum SettingsKey {
     public static let backupFolderBookmark = "settings.backupFolderBookmark"
     public static let lastBackupAt = "settings.lastBackupAt"
     public static let didSeedCategories = "settings.didSeedCategories"
+    public static let startReminderEnabled = "settings.startReminderEnabled"
+    public static let startReminderHour = "settings.startReminderHour"
+    public static let startReminderMinute = "settings.startReminderMinute"
 }
 
 /// Plain UserDefaults wrapper, deliberately not `@Observable`.
@@ -41,7 +44,10 @@ public final class AppSettings {
             SettingsKey.promptWindowSlotCount: 18,
             SettingsKey.useTimeSensitive: true,
             SettingsKey.daySummaryEnabled: true,
-            SettingsKey.liveActivityEnabled: true
+            SettingsKey.liveActivityEnabled: true,
+            SettingsKey.startReminderEnabled: true,
+            SettingsKey.startReminderHour: 7,
+            SettingsKey.startReminderMinute: 0
         ])
     }
 
@@ -118,6 +124,26 @@ public final class AppSettings {
     public var lastBackupAt: Date? {
         get { defaults.object(forKey: SettingsKey.lastBackupAt) as? Date }
         set { defaults.set(newValue, forKey: SettingsKey.lastBackupAt) }
+    }
+
+    /// Nudge to start the day if you haven't.
+    ///
+    /// Forgetting to start costs a whole day, silently — a far worse failure than missing a
+    /// quarter hour, and a far more likely one, since you aren't thinking about the app when
+    /// you wake up.
+    public var startReminderEnabled: Bool {
+        get { defaults.bool(forKey: SettingsKey.startReminderEnabled) }
+        set { defaults.set(newValue, forKey: SettingsKey.startReminderEnabled) }
+    }
+
+    public var startReminderHour: Int {
+        get { defaults.integer(forKey: SettingsKey.startReminderHour) }
+        set { defaults.set(newValue, forKey: SettingsKey.startReminderHour) }
+    }
+
+    public var startReminderMinute: Int {
+        get { defaults.integer(forKey: SettingsKey.startReminderMinute) }
+        set { defaults.set(newValue, forKey: SettingsKey.startReminderMinute) }
     }
 
     public var didSeedCategories: Bool {

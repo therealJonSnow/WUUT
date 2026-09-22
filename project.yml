@@ -53,6 +53,9 @@ targets:
       # Tokens only — Theme.swift is deliberately free of model references so the
       # Live Activity can wear the same paper as the app.
       - path: WUUT/Shared/Theme.swift
+      # The Live Activity's button. The widget needs the intent type to build the button;
+      # iOS performs it in the app's process, against the app target's handler.
+      - path: WUUT/Shared/LogSameAsLastIntent.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.wuut.app.widgets

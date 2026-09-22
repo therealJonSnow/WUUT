@@ -23,6 +23,11 @@ public final class NotificationScheduler {
     private static let slotPrefix = "slot"
     private static let summaryIdentifier = "day-summary"
     private static let blockEndIdentifier = "block-end"
+    private static let startReminderIdentifier = "start-reminder"
+
+    /// One thread for the whole app, so five unlogged slots make one stack on the lock
+    /// screen rather than five. The per-slot escalation still collapses inside it.
+    private static let threadIdentifier = "wuut.ledger"
 
     /// The platform limit, for the record. Never scheduled up to.
     public static let platformPendingLimit = 64
@@ -97,7 +102,18 @@ public final class NotificationScheduler {
     ///
     /// Rebuilding wholesale rather than diffing: at 54 requests it costs nothing, and it means
     /// the scheduled set cannot drift out of step with the store.
-    public func refreshPrompts(for slots: [Slot], now: Date, calendar: Calendar) async {
+    /// - Parameters:
+    ///   - lastEntry: the most recent logged entry's text, shown in the body so the
+    ///     "Same as last" action is something you can act on without opening the app.
+    ///   - backlogCount: how many finished slots are already unlogged. The backlog is what
+    ///     predicts abandonment, so it belongs on the prompt rather than only in the app.
+    public func refreshPrompts(
+        for slots: [Slot],
+        now: Date,
+        calendar: Calendar,
+        lastEntry: String? = nil,
+        backlogCount: Int = 0
+    ) async {
         await cancelAllPrompts()
 
         let windowSize = max(1, settings.promptWindowSlotCount)
@@ -120,7 +136,9 @@ public final class NotificationScheduler {
                     for: slot,
                     index: index,
                     backfillWindowMinutes: backfillWindow,
-                    calendar: calendar
+                    calendar: calendar,
+                    lastEntry: lastEntry,
+                    backlogCount: backlogCount
                 )
                 let components = calendar.dateComponents(
                     [.year, .month, .day, .hour, .minute, .second],
@@ -141,18 +159,25 @@ public final class NotificationScheduler {
         for slot: Slot,
         index: Int,
         backfillWindowMinutes: Int,
-        calendar: Calendar
+        calendar: Calendar,
+        lastEntry: String?,
+        backlogCount: Int
     ) -> UNMutableNotificationContent {
         let content = UNMutableNotificationContent()
         let window = Formatters.window(from: slot.startAt, to: slot.endAt, calendar: calendar)
 
+        // Showing the previous entry is what makes the "Same as last" action usable: without
+        // it you are being asked to repeat something you cannot see.
+        let previous = lastEntry.map { "last: \($0)" }
+
         switch index {
         case 0:
             content.title = "What were you up to?"
-            content.body = window
+            content.body = [window, previous].compactMap { $0 }.joined(separator: " · ")
         case 1:
-            content.title = "Still unlogged"
-            content.body = "\(window) — a minute now saves a guess later"
+            content.title = backlogCount > 1 ? "\(backlogCount) slots behind" : "Still unlogged"
+            content.body = [window, previous ?? "a minute now saves a guess later"]
+                .joined(separator: " · ")
         default:
             let lockTime = Formatters.time(
                 slot.lockDate(backfillWindowMinutes: backfillWindowMinutes),
@@ -163,9 +188,7 @@ public final class NotificationScheduler {
         }
 
         content.categoryIdentifier = Self.promptCategoryIdentifier
-        // One thread per slot, so three escalating prompts collapse into a single stack
-        // instead of three separate banners.
-        content.threadIdentifier = "slot.\(slot.id.uuidString)"
+        content.threadIdentifier = Self.threadIdentifier
         content.sound = .default
         content.userInfo = [Self.userInfoSlotIDKey: slot.id.uuidString]
         if settings.useTimeSensitive {
@@ -204,6 +227,7 @@ public final class NotificationScheduler {
         content.title = title
         content.body = body
         content.sound = .default
+        content.threadIdentifier = Self.threadIdentifier
         let request = UNNotificationRequest(
             identifier: Self.summaryIdentifier,
             content: content,
@@ -219,6 +243,7 @@ public final class NotificationScheduler {
         content.title = "Block finished"
         content.body = "\(label) — back to logging"
         content.sound = .default
+        content.threadIdentifier = Self.threadIdentifier
         if settings.useTimeSensitive {
             content.interruptionLevel = .timeSensitive
         }
@@ -236,6 +261,39 @@ public final class NotificationScheduler {
 
     public func cancelBlockEnd() {
         center.removePendingNotificationRequests(withIdentifiers: [Self.blockEndIdentifier])
+    }
+
+    // MARK: - Start of day
+
+    /// Keeps the daily "start the day?" reminder in step with whether one is running.
+    ///
+    /// A single repeating request rather than one per day: the 64-request ceiling is already
+    /// mostly spent on the prompt window, and a repeating calendar trigger costs one slot.
+    /// While a day is active the request is removed, and it goes back when the day ends.
+    public func refreshStartReminder(dayIsActive: Bool, calendar: Calendar) async {
+        center.removePendingNotificationRequests(withIdentifiers: [Self.startReminderIdentifier])
+        guard settings.startReminderEnabled, !dayIsActive else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = "Start the day?"
+        content.body = "Nothing is being recorded yet."
+        content.sound = .default
+        content.threadIdentifier = Self.threadIdentifier
+        if settings.useTimeSensitive {
+            content.interruptionLevel = .timeSensitive
+        }
+
+        var components = DateComponents()
+        components.hour = settings.startReminderHour
+        components.minute = settings.startReminderMinute
+        components.calendar = calendar
+
+        let request = UNNotificationRequest(
+            identifier: Self.startReminderIdentifier,
+            content: content,
+            trigger: UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+        )
+        try? await center.add(request)
     }
 
     /// Diagnostics for the Settings screen — proof the window is where it should be.

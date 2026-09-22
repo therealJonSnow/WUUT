@@ -45,6 +45,7 @@ struct WeekView: View {
                         summaryCard(logged: logged, unaccounted: unaccounted)
                         perDayCard(stats)
                         categoryCard(totals: totals, unaccountedMinutes: unaccounted)
+                        provenanceCard()
                         tagCard()
                     }
                 }
