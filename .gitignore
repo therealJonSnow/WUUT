@@ -18,3 +18,6 @@ xcuserdata/
 
 # Written by scripts/build.sh
 build.log
+
+# Written by scripts/make_icon.py
+icon_preview.png

@@ -99,6 +99,19 @@ you got.
 notifications are scheduled against the platform's limit of 64. If that number is zero during a
 logged day, something is wrong.
 
+## Regenerating the app icon
+
+The icon is generated, not hand-drawn, so it stays in step with the palette:
+
+```sh
+python3 -m pip install Pillow
+python3 scripts/make_icon.py
+```
+
+It overwrites `WUUT/Assets.xcassets/AppIcon.appiconset/icon-1024.png` and drops an
+`icon_preview.png` in the repo root showing it at home-screen sizes. The colours at the top
+of the script must match `Theme` in `WUUT/Shared/Theme.swift`.
+
 ## If the build fails
 
 This project was written without a compiler to hand, so expect a few errors on the first
