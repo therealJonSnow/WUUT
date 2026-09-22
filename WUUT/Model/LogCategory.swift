@@ -16,12 +16,12 @@ public final class LogCategory {
     /// Six-digit hex, no leading hash. Light appearance.
     public var colorHex: String = "888888"
 
-    /// Dark-appearance hex.
+    /// Unused. The app is light-appearance only (see `Theme`), so nothing reads this.
     ///
-    /// A second value rather than an automatic lightening of the first: the usable lightness
-    /// band on a dark surface is narrower than on a light one, so a flipped colour either
-    /// loses contrast or blows out. These were derived by retuning each hue's lightness into
-    /// the dark band and checked against it.
+    /// Kept in the schema rather than removed because dropping a stored property means
+    /// migrating a store that holds the only copy of real logged data, which is not a
+    /// trade worth making for a field nobody can see. It is written as a copy of
+    /// `colorHex` so it is correct if dark mode is ever done properly.
     public var colorHexDark: String = "999999"
 
     /// SF Symbol name.
@@ -55,33 +55,33 @@ public final class LogCategory {
 /// slot, derived from `SlotState`, so it can never be assigned by hand — which is what stops
 /// it from being quietly explained away.
 ///
-/// On the colours: these were checked with a palette validator rather than picked by eye, in
-/// both appearances, for lightness band, chroma floor, colour-blind separation and contrast
-/// against the surface. The first attempt had Work and Meetings six units apart — effectively
-/// the same colour, for the two categories a working day is mostly made of — and four
-/// categories that read as grey, which is reserved here for unaccounted time.
+/// Hues are assigned by meaning and only their lightness and chroma were optimised, against
+/// the ivory page rather than a neutral white. Violet is excluded — it rules the page and
+/// marks missing time, so no category may be mistaken for either.
 ///
-/// Fourteen hues cannot all be mutually distinguishable, particularly in dark mode where the
-/// usable lightness band is narrow. That is why no chart in this app identifies a category by
-/// colour alone: every bar, chip and legend row carries the category's symbol and name. See
-/// `WeekView`.
+/// The honest number: the weakest pair in this set is ΔE 7.7 in normal vision and 1.4 under
+/// simulated colour blindness. Fourteen categories **cannot** be told apart by colour alone,
+/// and no palette fixes that. It is why every appearance of a category in this app — chip,
+/// bar, legend row — carries its symbol and its name, and why colour is only ever
+/// reinforcement. Cutting the seeded set to about eight is the only thing that would make
+/// colour self-sufficient.
 public enum DefaultCategories {
 
     public static let all: [(name: String, colorHex: String, colorHexDark: String, symbolName: String)] = [
-        ("Work",             "1D4ED8", "3C6BF1", "laptopcomputer"),
-        ("Meetings",         "A21CAF", "BB20CA", "person.2.fill"),
-        ("Admin",            "B45309", "BD5709", "tray.full.fill"),
-        ("Social media",     "DB2777", "D61D6F", "iphone.gen3"),
-        ("Entertainment",    "0891B2", "0386A5", "tv.fill"),
-        ("Reading",          "15803D", "029238", "book.fill"),
-        ("Exercise",         "E11D48", "DD1641", "figure.run"),
-        ("Dog",              "B8860B", "9D7001", "dog.fill"),
-        ("Chores",           "7C3AED", "8849F4", "washer.fill"),
-        ("Errands",          "0D9488", "019386", "bag.fill"),
-        ("Eating",           "EA580C", "CA4805", "fork.knife"),
-        ("Family & friends", "4338CA", "6C63E1", "person.3.fill"),
-        ("Travel",           "0284C7", "0281C2", "tram.fill"),
-        ("Rest",             "9A3412", "D53601", "moon.zzz.fill")
+        ("Work",             "02589A", "02589A", "laptopcomputer"),   // ink blue
+        ("Meetings",         "099EA0", "099EA0", "person.2.fill"),    // steel — off purple, violet owns it
+        ("Admin",            "A07506", "A07506", "tray.full.fill"),   // filing-cabinet khaki
+        ("Social media",     "993D6E", "993D6E", "iphone.gen3"),      // magenta
+        ("Entertainment",    "AB5242", "AB5242", "tv.fill"),          // burnt orange
+        ("Reading",          "03A567", "03A567", "book.fill"),        // library green
+        ("Exercise",         "CC495F", "CC495F", "figure.run"),       // vermilion
+        ("Dog",              "8B5505", "8B5505", "dog.fill"),         // ochre
+        ("Chores",           "037C9A", "037C9A", "washer.fill"),      // slate
+        ("Errands",          "018370", "018370", "bag.fill"),         // teal
+        ("Eating",           "C57148", "C57148", "fork.knife"),       // sienna
+        ("Family & friends", "AE5E8F", "AE5E8F", "person.3.fill"),    // rose
+        ("Travel",           "0395D1", "0395D1", "tram.fill"),        // indigo
+        ("Rest",             "70883D", "70883D", "moon.zzz.fill")     // sage
     ]
 
     public static func makeAll() -> [LogCategory] {
@@ -96,7 +96,7 @@ public enum DefaultCategories {
         }
     }
 
-    /// Offered when you add a category of your own, cycling through the validated hues.
+    /// Offered when you add a category of your own, cycling through the set.
     public static func colorPair(forSortOrder order: Int) -> (light: String, dark: String) {
         let spec = all[abs(order) % all.count]
         return (spec.colorHex, spec.colorHexDark)

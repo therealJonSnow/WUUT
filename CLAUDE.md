@@ -33,10 +33,15 @@ bare `xcodebuild`, whose output is thousands of lines of noise.
 - **The model type is `LogCategory`, not `Category`** — kept clear of type names in Charts and
   UIKit. Tags are inline `Slot.tagKeys: [String]`, not a many-to-many; the `Tag` model is just
   an index for autocomplete.
-- **No chart may identify a category by colour alone.** Fourteen hues are not mutually
-  distinguishable, especially in dark mode's narrow lightness band. Every bar, chip and legend
-  row carries the symbol and name. Categories have two hexes, light and dark; dark is not a
-  computed lightening. Validate any palette change with a validator, don't eyeball it.
+- **Light appearance only.** The app forces `.preferredColorScheme(.light)`. Don't add dark
+  styling piecemeal; dark mode is a separate design (SPEC §7.7 and §11). `colorHexDark` is
+  dead schema kept to avoid a migration — nothing reads it.
+- **Violet is reserved** for the ruling and for unaccounted time. No category, button or
+  accent may use it.
+- **No chart may identify a category by colour alone.** The seeded set's weakest pair is
+  ΔE 7.7 normal / 1.4 simulated-CVD: fourteen categories cannot be separated by colour, and
+  no palette fixes it. Every bar, chip and legend row carries the symbol and name. Validate
+  any palette change with a validator, don't eyeball it.
 
 ## Decisions already made, with reasons
 
@@ -48,6 +53,9 @@ Deciding these again wastes time; if one needs revisiting, say so explicitly.
 - Block out ahead rather than snooze — one suppression mechanism, and it captures what you did.
 - Fixed categories plus freeform tags — clean charts without losing detail.
 - End-of-day summary as the only nudge in v1 — caps and targets need real data first.
+- Logbook visual direction: ivory paper, violet ruling, serif prose, mono times, flat ruled
+  panels. Logged time is quiet, unaccounted time is loud — that inversion is the argument,
+  so don't "tidy" missing time into something recessive.
 - Week view is two small charts (per-day logged-vs-not, and a labelled category bar list), not
   one fourteen-colour stacked bar. The stack was tried and rejected on legibility grounds.
 - The project is generated from `project.yml` rather than committing a `.xcodeproj`, because a

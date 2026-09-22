@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 extension Color {
 
@@ -27,26 +26,107 @@ extension Color {
 }
 
 extension LogCategory {
-    /// Resolves per appearance at draw time, so a category keeps its identity in both light
-    /// and dark without the view needing to know which is active.
-    var color: Color {
-        let light = colorHex
-        let dark = colorHexDark
-        return Color(UIColor { traits in
-            traits.userInterfaceStyle == .dark
-                ? UIColor(Color(hex: dark))
-                : UIColor(Color(hex: light))
-        })
+    /// Light appearance only. See `Theme` on why there is no dark variant.
+    var color: Color { Color(hex: colorHex) }
+}
+
+/// The Logbook palette.
+///
+/// WUUT is a ledger, not a diary — its own spec says so — and it is drawn like one: soft
+/// ivory paper, violet ruling in the manner of a Rhodia pad, ink for the writing.
+///
+/// **Violet is reserved.** It rules the page and it marks time you failed to account for,
+/// and it is used for nothing else. No category may claim it; the seeded set excludes a
+/// band of hues either side of it.
+///
+/// **Logged time is quiet, unaccounted time is loud.** That inversion is the point. Time
+/// you recorded is finished and wants nothing from you, so it recedes; time you lost is
+/// the first thing your eye lands on. The stock iOS treatment did the exact opposite,
+/// rendering missing time as pale grey that politely got out of the way.
+///
+/// **Light appearance only, deliberately.** The app forces `.light` rather than shipping a
+/// half-considered dark mode: paper at night is a different design, not an inverted one,
+/// and it is better to do it properly later than badly now.
+enum Theme {
+
+    // MARK: Page
+    static let paper      = Color(hex: "F7F1DE")   // the page
+    static let card       = Color(hex: "FDF8EA")   // a leaf laid on it
+    static let rule       = Color(hex: "C0AECC")   // ruled line, Rhodia violet
+    static let ruleFaint  = Color(hex: "DFD5E5")
+
+    // MARK: Ink
+    static let ink        = Color(hex: "1E1A13")   // the writing
+    static let ink2       = Color(hex: "6A6150")   // secondary
+    static let ink3       = Color(hex: "9A9078")   // tertiary
+
+    // MARK: Reserved
+    /// Unaccounted time, and nothing else.
+    static let violet     = Color(hex: "54268F")
+    /// The plate an unaccounted row sits on.
+    static let violetSoft = Color(hex: "E3D9EE")
+
+    static let slotRowMinHeight: CGFloat = 54
+
+    // MARK: Type
+    //
+    // Serif for what you wrote, mono for what the clock says. Times and durations are
+    // data and line up in a column like a ledger; entries are prose and read like it.
+
+    static func serif(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
+        .system(size: size, weight: weight, design: .serif)
+    }
+
+    static func mono(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
+        .system(size: size, weight: weight, design: .monospaced)
     }
 }
 
-enum Theme {
-    /// Colour for time that was never logged. Not a category — you can't assign it — so its
-    /// colour lives here rather than in the store. See SPEC §4.1.
-    static let unaccounted = Color.secondary.opacity(0.28)
+/// Diagonal hatching. Used to strike out time that was never accounted for, so a lost
+/// quarter hour reads as a hole in the page rather than a differently coloured row.
+struct Hatching: View {
 
-    static let unaccountedSolid = Color(hex: "94A3B8")
+    var color: Color
+    var spacing: CGFloat = 7
+    var lineWidth: CGFloat = 1
 
-    /// Row height for one quarter hour in the timeline.
-    static let slotRowMinHeight: CGFloat = 52
+    var body: some View {
+        Canvas { context, size in
+            var path = Path()
+            var x = -size.height
+            while x < size.width {
+                path.move(to: CGPoint(x: x, y: size.height))
+                path.addLine(to: CGPoint(x: x + size.height, y: 0))
+                x += spacing
+            }
+            context.stroke(path, with: .color(color), lineWidth: lineWidth)
+        }
+        .allowsHitTesting(false)
+    }
+}
+
+/// A hairline in the ruling colour. A ledger is made of these.
+struct Rule: View {
+    var color: Color = Theme.rule
+    var body: some View {
+        Rectangle()
+            .fill(color)
+            .frame(height: 1)
+    }
+}
+
+/// Small-caps label — uppercased, tracked out, quiet. Used for category names, column
+/// headings and the UNACCOUNTED mark.
+struct Marginalia: View {
+    let text: String
+    var color: Color = Theme.ink2
+    var size: CGFloat = 9
+    var weight: Font.Weight = .regular
+
+    var body: some View {
+        Text(text.uppercased())
+            .font(Theme.mono(size, weight))
+            .tracking(1.1)
+            .foregroundStyle(color)
+    }
 }

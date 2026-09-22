@@ -8,7 +8,8 @@ argue with.
 It is not a diary. Entries are short, factual and written to be counted, not reread.
 
 **Status:** implemented 2026-09-21; first compiled and tested 2026-09-22 against Xcode 27 / iOS 27
-SDK, on the simulator. The unit suite passes; the on-device behaviours in §12 are still unverified.
+SDK, on the simulator, and running on device. Redesigned to the Logbook visual direction (§7.7)
+on 2026-09-22. The unit suite passes; the on-device behaviours in §12 are still unverified.
 Build instructions are in [docs/SETUP.md](docs/SETUP.md).
 
 ---
@@ -25,6 +26,7 @@ Build instructions are in [docs/SETUP.md](docs/SETUP.md).
 | Block out ahead for meetings | Snooze — one suppression mechanism is enough |
 | Backfill window, then slots lock as Unaccounted | Unlimited retrospective editing — declined, it invites fiction |
 | Fixed categories + freeform tags | Automatic classification — revisit once there's real data |
+| Light appearance only | Dark mode — deferred deliberately, see §7.7 |
 | Day timeline, week breakdown, accounted % | Hour-of-day heatmaps, trends, streaks, caps — §11 |
 | End-of-day summary notification | Category caps and interventions — §11 |
 | Versioned JSON export + automatic weekly backup | Cloud sync — needs CloudKit, paid-only (§9) |
@@ -151,20 +153,32 @@ Errands · Eating · Family & friends · Travel · Rest
 `Unaccounted` is not a category. It is the absence of a logged slot, computed from `SlotState`,
 so it can never be assigned by hand.
 
-**On the colours.** These were checked with a palette validator rather than chosen by eye, for
-lightness band, chroma floor, colour-blind separation and contrast against the surface, in both
-appearances. The first attempt had two faults worth recording: Work and Meetings were six units
-apart, effectively the same colour for the two categories a working day is mostly made of; and
-four categories read as grey, which is reserved here for unaccounted time.
+### 4.1 Seeded categories
 
-Each category therefore carries **two** hexes. Dark mode is not a lightening of light mode —
-the usable lightness band on a dark surface is narrower, so a flipped colour either loses
-contrast or blows out.
+Editable and reorderable in Settings; archived rather than deleted so old entries keep meaning.
 
-Fourteen hues cannot all be mutually distinguishable, particularly in dark mode. Rather than
-cut the list, **no chart in this app identifies a category by colour alone** — every bar, chip
-and legend row carries the category's symbol and name. That constraint is what drove the week
-view's form; see §7.6.
+Work · Meetings · Admin · Social media · Entertainment · Reading · Exercise · Dog · Chores ·
+Errands · Eating · Family & friends · Travel · Rest
+
+`Unaccounted` is not a category. It is the absence of a logged slot, computed from `SlotState`,
+so it can never be assigned by hand.
+
+**On the colours.** Hues are assigned by *meaning* — ink blue for Work, ochre for Dog,
+magenta for Social media — and only their lightness and chroma were optimised, against the
+ivory page rather than a neutral white. Violet is excluded from the whole set, because it
+rules the page and marks missing time (§7.7).
+
+Each category still carries a `colorHexDark` field. Nothing reads it: the app is light-only.
+It is kept in the schema rather than removed because dropping a stored property means
+migrating a store holding the only copy of real logged data, which is not a trade worth
+making for a field nobody can see.
+
+**The honest number:** the weakest pair in the seeded set is ΔE 7.7 in normal vision and 1.4
+under simulated colour blindness, measured with a validator rather than by eye. Fourteen
+categories **cannot** be told apart by colour alone, and no palette fixes that — it is a fact
+about fourteen, not a tuning failure. It is why every appearance of a category in this app
+carries its symbol and its name, and why colour is only ever reinforcement. Cutting the
+seeded set to around eight is the only change that would make colour self-sufficient.
 
 ---
 
@@ -316,6 +330,34 @@ adjacent segments legible, and the colour work in §4.1 proved it rather than as
 
 Below those, the week's top tags. Everything duration-weighted.
 
+### 7.7 Visual design — the Logbook
+
+The first build wore stock iOS chrome with a web dashboard's chart colours: twenty uses of
+`systemGroupedBackground`, an accent colour that was never defined and therefore resolved to
+Apple's default blue, and fourteen category hues lifted from a general-purpose palette. It
+looked like a settings screen because that is what it was made of.
+
+The app is now drawn as what its own first paragraph says it is: **a ledger, not a diary.**
+
+- **Soft ivory paper with violet ruling**, after a Rhodia pad. The ruling is the cheaper half
+  of that borrow and the more distinctive.
+- **Serif for what you wrote, monospace for what the clock says.** Times and durations are
+  data and line up in a fixed column; entries are prose and read like it.
+- **Flat, ruled panels** rather than floating rounded cards. This is a page.
+- **Violet is reserved.** It rules the page and it marks time you failed to account for. No
+  category may claim it, and the seeded set excludes a band of hues either side of it.
+
+**The inversion is the point.** Logged time is quiet — it is finished and wants nothing from
+you. Unaccounted time is the loudest thing on the screen: a violet plate struck through with
+hatching. The stock treatment did exactly the opposite, rendering missing time as pale grey
+that politely got out of the way, which is precisely backwards for an app whose entire thesis
+is that time you cannot account for should bother you.
+
+**Light appearance only, deliberately.** The app forces `.light`. Paper at night is a
+different design rather than an inverted one, and shipping a half-considered dark mode is
+worse than shipping none — the earlier attempt at one is what produced the two-hex category
+system that never passed its own checks in dark. See §11.
+
 ---
 
 ## 8. Export and backup
@@ -394,7 +436,9 @@ where every bug that would corrupt your history would live.
 
 ## 11. Deferred
 
-**Free, later:** App Intents so Siri and Shortcuts can log a slot; hour-of-day patterns and
+**Free, later:** a proper dark mode — paper at night designed from scratch, not an inversion,
+with the redaction treatment re-solved since a dark block on a dark ground disappears;
+App Intents so Siri and Shortcuts can log a slot; hour-of-day patterns and
 week-over-week trends once there are weeks to compare; tag drill-down.
 
 **macOS:** a menu bar app sharing the model layer, reading the same JSON folder. Worth noting

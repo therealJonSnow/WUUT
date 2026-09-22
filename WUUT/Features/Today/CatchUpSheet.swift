@@ -80,7 +80,7 @@ struct CatchUpSheet: View {
 
             footer(for: slot)
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Theme.paper)
         .onAppear { textFocused = true }
     }
 
@@ -88,14 +88,14 @@ struct CatchUpSheet: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(slot.displayWindow)
-                    .font(.title2.weight(.bold))
-                    .monospacedDigit()
+                    .font(Theme.mono(19, .bold))
+                    .foregroundStyle(Theme.ink)
                 Spacer()
                 Text(queue.count == 1 ? "1 left" : "\(queue.count) left")
                     .font(.footnote.weight(.medium))
                     .foregroundStyle(.secondary)
             }
-            Text("Locks at \(Formatters.time(slot.lockDate(backfillWindowMinutes: AppSettings.shared.backfillWindowMinutes)))")
+            Text("Struck out at \(Formatters.time(slot.lockDate(backfillWindowMinutes: AppSettings.shared.backfillWindowMinutes)))")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
                 .monospacedDigit()
@@ -145,7 +145,7 @@ struct CatchUpSheet: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemGroupedBackground))
+        .background(Theme.paper)
     }
 
     /// Keeps the category between entries — consecutive slots are usually the same sort of

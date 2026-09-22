@@ -16,7 +16,7 @@ struct DayDetailView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 12) {
+            LazyVStack(spacing: 0) {
                 header
 
                 ForEach(day.orderedSlots.reversed(), id: \.id) { slot in
@@ -37,7 +37,7 @@ struct DayDetailView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Theme.paper)
         .navigationTitle(Formatters.longDate(day.date))
         .navigationBarTitleDisplayMode(.inline)
         .sheet(unwrapping: $editingSlot) { slot in
@@ -49,8 +49,8 @@ struct DayDetailView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(Formatters.percent(day.accountedFraction))
-                    .font(.system(size: 30, weight: .bold, design: .rounded))
-                    .monospacedDigit()
+                    .font(Theme.serif(34, .bold))
+                    .foregroundStyle(Theme.ink)
                 Text("accounted for")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -77,6 +77,7 @@ struct DayDetailView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+        .background(Theme.card)
+        .overlay(Rectangle().strokeBorder(Theme.rule, lineWidth: 1))
     }
 }

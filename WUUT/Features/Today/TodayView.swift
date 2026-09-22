@@ -34,8 +34,10 @@ struct TodayView: View {
                     }
                 }
             }
-            .navigationTitle(dayController.activeDay == nil ? "WUUT" : Formatters.longDate(now))
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Theme.paper, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar { toolbarContent }
         }
         .onReceive(ticker) { tick in
@@ -110,13 +112,15 @@ struct TodayView: View {
         let uncategorised = slots.filter { $0.state == .logged && $0.category == nil }
 
         return ScrollView {
-            LazyVStack(spacing: 12) {
+            LazyVStack(spacing: 0) {
+                Masthead(date: now)
                 DayHeaderView(day: day, now: now)
 
                 if let block = dayController.currentBlockOut(now: now) {
                     BlockOutBanner(block: block, now: now) {
                         dayController.cancelBlockOut(block, now: .now)
                     }
+                    .padding(.top, 14)
                 }
 
                 if !fillable.isEmpty {
@@ -127,12 +131,14 @@ struct TodayView: View {
                     ) {
                         showCatchUp = true
                     }
+                    .padding(.top, 14)
                 }
 
                 if !uncategorised.isEmpty {
                     UncategorisedBanner(count: uncategorised.count) {
                         loggingSlot = uncategorised.first
                     }
+                    .padding(.top, 14)
                 }
 
                 // Newest first: the slot you owe an answer for should be the first thing you see.
@@ -152,10 +158,10 @@ struct TodayView: View {
                     )
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 18)
+            .padding(.bottom, 24)
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Theme.paper)
     }
 }
 
@@ -180,6 +186,26 @@ extension View {
     }
 }
 
+// MARK: - Masthead
+
+/// The head of the page. A ledger says what it is and what day it covers.
+private struct Masthead: View {
+
+    let date: Date
+
+    var body: some View {
+        VStack(spacing: 8) {
+            HStack {
+                Marginalia(Formatters.longDate(date), color: Theme.ink2)
+                Spacer()
+                Marginalia("W U U T", color: Theme.ink3, weight: .bold)
+            }
+            Rule(color: Theme.ink)
+        }
+        .padding(.top, 6)
+    }
+}
+
 // MARK: - Not logging
 
 private struct NotLoggingView: View {
@@ -188,42 +214,56 @@ private struct NotLoggingView: View {
     let onStart: () -> Void
 
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(alignment: .leading, spacing: 0) {
+            Masthead(date: now)
+
             Spacer()
 
-            Image(systemName: "sunrise.fill")
-                .font(.system(size: 52))
-                .foregroundStyle(.orange)
+            Text("Nothing recorded")
+                .font(Theme.serif(30, .semibold))
+                .foregroundStyle(Theme.ink)
 
-            VStack(spacing: 6) {
-                Text("Not logging")
-                    .font(.title2.weight(.semibold))
-                Text("Start the day and WUUT will ask what you're up to every quarter hour.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-
-            Button(action: onStart) {
-                Text("Start the day")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-            }
-            .buttonStyle(.borderedProminent)
+            Text("Start the day and WUUT will ask what you're up to every quarter hour.")
+                .font(Theme.serif(15))
+                .foregroundStyle(Theme.ink2)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 10)
 
             // The stub rule, stated where it matters: the first slot runs to the next
             // quarter hour, not for a full fifteen minutes.
-            Text("First interval: \(Formatters.window(from: now, to: QuarterHour.next(after: now, calendar: .current)))")
-                .font(.footnote)
-                .foregroundStyle(.tertiary)
-                .monospacedDigit()
+            HStack(spacing: 8) {
+                Marginalia("First interval", color: Theme.ink3, size: 8)
+                Text(Formatters.window(from: now, to: QuarterHour.next(after: now, calendar: .current)))
+                    .font(Theme.mono(11))
+                    .foregroundStyle(Theme.ink2)
+            }
+            .padding(.top, 22)
+
+            Rule()
+                .padding(.top, 8)
+
+            Button(action: onStart) {
+                HStack {
+                    Text("Start the day")
+                        .font(Theme.serif(17, .semibold))
+                    Spacer()
+                    Image(systemName: "arrow.right")
+                }
+                .foregroundStyle(Theme.card)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 16)
+                .frame(maxWidth: .infinity)
+                .background(Theme.ink)
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 26)
 
             Spacer()
+            Spacer()
         }
-        .padding(.horizontal, 28)
-        .frame(maxWidth: .infinity)
-        .background(Color(.systemGroupedBackground))
+        .padding(.horizontal, 18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.paper)
     }
 }
 
@@ -235,48 +275,64 @@ private struct DayHeaderView: View {
     let now: Date
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(Formatters.percent(day.accountedFraction))
-                    .font(.system(size: 40, weight: .bold, design: .rounded))
-                    .monospacedDigit()
-                Text("accounted for")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top) {
+                // What went right, stated plainly.
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    Text("\(Int((day.accountedFraction * 100).rounded()))")
+                        .font(Theme.serif(52, .bold))
+                        .foregroundStyle(Theme.ink)
+                    Text("%")
+                        .font(Theme.serif(24))
+                        .foregroundStyle(Theme.ink2)
+                    Text("accounted for")
+                        .font(Theme.serif(13))
+                        .foregroundStyle(Theme.ink2)
+                        .padding(.leading, 6)
+                }
+
                 Spacer()
+
+                // And what went missing, in the colour it is drawn in everywhere else.
+                if day.unaccountedMinutes > 0 {
+                    VStack(alignment: .trailing, spacing: 5) {
+                        Text(Formatters.duration(minutes: day.unaccountedMinutes))
+                            .font(Theme.mono(15, .bold))
+                            .foregroundStyle(Theme.violet)
+                        Marginalia("Unaccounted", color: Theme.card, size: 8)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(Theme.violet)
+                    }
+                    .padding(.top, 6)
+                }
             }
+            .padding(.top, 18)
 
             AccountedBar(day: day)
+                .padding(.top, 16)
 
-            HStack(spacing: 14) {
-                statistic("Logged", Formatters.duration(minutes: day.loggedMinutes), .green)
-                if day.unaccountedMinutes > 0 {
-                    statistic("Unaccounted", Formatters.duration(minutes: day.unaccountedMinutes), Theme.unaccountedSolid)
+            HStack(spacing: 10) {
+                Text("\(Formatters.duration(minutes: day.loggedMinutes)) logged")
+                    .font(Theme.mono(10))
+                    .foregroundStyle(Theme.ink2)
+                if let started = day.startedAt {
+                    Text("· started \(Formatters.time(started))")
+                        .font(Theme.mono(10))
+                        .foregroundStyle(Theme.ink3)
                 }
                 Spacer()
             }
+            .padding(.top, 8)
 
-            if let started = day.startedAt {
-                Text("Started \(Formatters.time(started))")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-            }
-        }
-        .padding(16)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
-    }
-
-    private func statistic(_ label: String, _ value: String, _ color: Color) -> some View {
-        HStack(spacing: 5) {
-            Circle().fill(color).frame(width: 8, height: 8)
-            Text(value).font(.subheadline.weight(.semibold)).monospacedDigit()
-            Text(label).font(.caption).foregroundStyle(.secondary)
+            Rule(color: Theme.ink)
+                .padding(.top, 16)
         }
     }
 }
 
-/// Logged / unaccounted / still open, in proportion. Duration-weighted, so the short stub
-/// slots at either end of the day don't overstate themselves.
+/// Logged, lost and still open, in proportion. Duration-weighted, so the short stub slots
+/// at either end of a day don't overstate themselves.
 private struct AccountedBar: View {
 
     let day: Day
@@ -286,22 +342,54 @@ private struct AccountedBar: View {
             let total = max(1, day.elapsedMinutes)
             let width = geometry.size.width
 
-            HStack(spacing: 1) {
-                segment(.green, day.loggedMinutes, total, width)
-                segment(Theme.unaccountedSolid, day.unaccountedMinutes, total, width)
-                segment(Color.secondary.opacity(0.18), day.pendingMinutes, total, width)
+            HStack(spacing: 0) {
+                Rectangle()
+                    .fill(Theme.ink)
+                    .frame(width: width * CGFloat(day.loggedMinutes) / CGFloat(total))
+
+                ZStack {
+                    Rectangle().fill(Theme.violet)
+                    Hatching(color: Theme.card.opacity(0.45), spacing: 5)
+                }
+                .frame(width: width * CGFloat(day.unaccountedMinutes) / CGFloat(total))
+
+                Rectangle()
+                    .strokeBorder(Theme.rule, lineWidth: 1)
+                    .frame(width: width * CGFloat(day.pendingMinutes) / CGFloat(total))
             }
         }
-        .frame(height: 8)
-        .clipShape(Capsule())
-    }
-
-    private func segment(_ color: Color, _ minutes: Int, _ total: Int, _ width: CGFloat) -> some View {
-        color.frame(width: max(0, width * CGFloat(minutes) / CGFloat(total)))
+        .frame(height: 18)
     }
 }
 
 // MARK: - Banners
+//
+// Flat and ruled rather than floating cards — this is a page, not a stack of surfaces.
+
+private struct BannerShell<Content: View>: View {
+
+    var accent: Color
+    var onTap: (() -> Void)?
+    @ViewBuilder var content: () -> Content
+
+    var body: some View {
+        let shell = HStack(spacing: 0) {
+            Rectangle().fill(accent).frame(width: 4)
+            content()
+                .padding(.horizontal, 12)
+                .padding(.vertical, 12)
+            Spacer(minLength: 0)
+        }
+        .background(Theme.card)
+        .overlay(Rectangle().strokeBorder(Theme.rule, lineWidth: 1))
+
+        if let onTap {
+            Button(action: onTap) { shell }.buttonStyle(.plain)
+        } else {
+            shell
+        }
+    }
+}
 
 private struct CatchUpBanner: View {
 
@@ -311,30 +399,18 @@ private struct CatchUpBanner: View {
     let onTap: () -> Void
 
     var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 12) {
-                Image(systemName: "clock.badge.exclamationmark.fill")
-                    .font(.title2)
-                    .foregroundStyle(.orange)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(count == 1 ? "1 slot needs filling" : "\(count) slots need filling")
-                        .font(.subheadline.weight(.semibold))
-                    if let earliestLock {
-                        Text("Oldest locks at \(Formatters.time(earliestLock))")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .monospacedDigit()
-                    }
+        BannerShell(accent: Theme.violet, onTap: onTap) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(count == 1 ? "1 slot needs filling" : "\(count) slots need filling")
+                    .font(Theme.serif(15, .semibold))
+                    .foregroundStyle(Theme.ink)
+                if let earliestLock {
+                    Text("Oldest is struck out at \(Formatters.time(earliestLock))")
+                        .font(Theme.mono(10))
+                        .foregroundStyle(Theme.ink2)
                 }
-
-                Spacer()
-                Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(.tertiary)
             }
-            .padding(14)
-            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
         }
-        .buttonStyle(.plain)
     }
 }
 
@@ -344,20 +420,11 @@ private struct UncategorisedBanner: View {
     let onTap: () -> Void
 
     var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 12) {
-                Image(systemName: "tag.slash")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-                Text(count == 1 ? "1 entry has no category" : "\(count) entries have no category")
-                    .font(.subheadline)
-                Spacer()
-                Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(.tertiary)
-            }
-            .padding(14)
-            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+        BannerShell(accent: Theme.ink3, onTap: onTap) {
+            Text(count == 1 ? "1 entry has no category" : "\(count) entries have no category")
+                .font(Theme.serif(14))
+                .foregroundStyle(Theme.ink2)
         }
-        .buttonStyle(.plain)
     }
 }
 
@@ -368,28 +435,26 @@ private struct BlockOutBanner: View {
     let onCancel: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "pause.rectangle.fill")
-                .font(.title2)
-                .foregroundStyle(.indigo)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(block.text)
-                    .font(.subheadline.weight(.semibold))
-                    .lineLimit(1)
-                Text("Blocked until \(Formatters.time(block.endAt))")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
+        BannerShell(accent: Theme.ink) {
+            HStack {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(block.text)
+                        .font(Theme.serif(15, .semibold))
+                        .foregroundStyle(Theme.ink)
+                        .lineLimit(1)
+                    Text("Blocked until \(Formatters.time(block.endAt))")
+                        .font(Theme.mono(10))
+                        .foregroundStyle(Theme.ink2)
+                }
+                Spacer()
+                Button(action: onCancel) {
+                    Marginalia("End", color: Theme.ink, weight: .bold)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .overlay(Rectangle().strokeBorder(Theme.ink, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
             }
-
-            Spacer()
-
-            Button("End", action: onCancel)
-                .font(.subheadline.weight(.medium))
-                .buttonStyle(.bordered)
         }
-        .padding(14)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
     }
 }

@@ -51,7 +51,7 @@ struct WeekView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Theme.paper)
             .navigationTitle("Week")
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(unwrapping: $selectedDay) { day in
@@ -208,8 +208,8 @@ struct WeekView: View {
         return HStack(alignment: .firstTextBaseline, spacing: 18) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(Formatters.percent(fraction))
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
-                    .monospacedDigit()
+                    .font(Theme.serif(40, .bold))
+                    .foregroundStyle(Theme.ink)
                 Text("accounted for")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -238,13 +238,13 @@ struct WeekView: View {
             Spacer()
         }
         .padding(16)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+        .background(Theme.card)
+        .overlay(Rectangle().strokeBorder(Theme.rule, lineWidth: 1))
     }
 
     private func perDayCard(_ stats: [DayStat]) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Per day")
-                .font(.subheadline.weight(.semibold))
+            Marginalia("Per day", color: Theme.ink2, weight: .bold)
 
             Chart {
                 ForEach(stats) { stat in
@@ -253,19 +253,17 @@ struct WeekView: View {
                         y: .value("Minutes", stat.loggedMinutes)
                     )
                     .foregroundStyle(by: .value("Time", "Logged"))
-                    .cornerRadius(3)
 
                     BarMark(
                         x: .value("Day", stat.label),
                         y: .value("Minutes", stat.unaccountedMinutes)
                     )
                     .foregroundStyle(by: .value("Time", "Not logged"))
-                    .cornerRadius(3)
                 }
             }
             .chartForegroundStyleScale([
-                "Logged": Color.accentColor,
-                "Not logged": Theme.unaccounted
+                "Logged": Theme.ink,
+                "Not logged": Theme.violet
             ])
             .chartYAxis {
                 AxisMarks { value in
@@ -321,7 +319,8 @@ struct WeekView: View {
             }
         }
         .padding(16)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+        .background(Theme.card)
+        .overlay(Rectangle().strokeBorder(Theme.rule, lineWidth: 1))
     }
 
     private func categoryCard(totals: [CategoryTotal], unaccountedMinutes: Int) -> some View {
@@ -332,8 +331,7 @@ struct WeekView: View {
         let grandTotal = totals.reduce(0) { $0 + $1.minutes } + unaccountedMinutes
 
         return VStack(alignment: .leading, spacing: 12) {
-            Text("By category")
-                .font(.subheadline.weight(.semibold))
+            Marginalia("By category", color: Theme.ink2, weight: .bold)
 
             VStack(spacing: 10) {
                 ForEach(totals) { total in
@@ -351,7 +349,7 @@ struct WeekView: View {
                     CategoryTotalRow(
                         symbolName: "lock.fill",
                         name: "Unaccounted",
-                        color: Theme.unaccountedSolid,
+                        color: Theme.violet,
                         minutes: unaccountedMinutes,
                         maximum: maximum,
                         grandTotal: grandTotal
@@ -360,7 +358,8 @@ struct WeekView: View {
             }
         }
         .padding(16)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+        .background(Theme.card)
+        .overlay(Rectangle().strokeBorder(Theme.rule, lineWidth: 1))
     }
 
     @ViewBuilder
@@ -368,8 +367,7 @@ struct WeekView: View {
         let tags = topTags()
         if !tags.isEmpty {
             VStack(alignment: .leading, spacing: 10) {
-                Text("Top tags")
-                    .font(.subheadline.weight(.semibold))
+                Marginalia("Top tags", color: Theme.ink2, weight: .bold)
 
                 ForEach(tags, id: \.key) { tag in
                     HStack {
@@ -384,7 +382,8 @@ struct WeekView: View {
                 }
             }
             .padding(16)
-            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+            .background(Theme.card)
+            .overlay(Rectangle().strokeBorder(Theme.rule, lineWidth: 1))
         }
     }
 }
