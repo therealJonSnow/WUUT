@@ -27,7 +27,8 @@ struct SettingsView: View {
                 dataSection
                 diagnosticsSection
             }
-            .navigationTitle("Settings")
+            .logbookSurface()
+            .logbookBars("Settings")
             .task { await refreshDiagnostics() }
         }
     }
@@ -36,15 +37,15 @@ struct SettingsView: View {
 
     private var promptsSection: some View {
         Section {
-            Stepper("First follow-up: \(firstFollowUp) min", value: $firstFollowUp, in: 1...14)
-            Stepper("Second follow-up: \(secondFollowUp) min", value: $secondFollowUp, in: 2...14)
+            Stepper("First follow-up  \(firstFollowUp) min", value: $firstFollowUp, in: 1...14)
+            Stepper("Second follow-up  \(secondFollowUp) min", value: $secondFollowUp, in: 2...14)
             Toggle("Break through Focus", isOn: $useTimeSensitive)
             Toggle("End-of-day summary", isOn: $daySummary)
             Toggle("Lock screen activity", isOn: $liveActivity)
         } header: {
-            Text("Prompts")
+            SectionHeading("Prompts")
         } footer: {
-            Text("""
+            SectionNote("""
                 Each slot gets a prompt the moment it ends, then two follow-ups, all cancelled \
                 as soon as you log it. The escalation is the point of the app — these timings \
                 are a guess, so change them.
@@ -53,13 +54,14 @@ struct SettingsView: View {
                 that may not be available on a free Apple ID; turn it off if prompts misbehave.
                 """)
         }
+        .logbookRow()
     }
 
     // MARK: - The day
 
     private var daySection: some View {
         Section {
-            Stepper("Shortest stub: \(minimumStub) min", value: $minimumStub, in: 0...10)
+            Stepper("Shortest stub  \(minimumStub) min", value: $minimumStub, in: 0...10)
             Picker("Backfill window", selection: $backfillWindow) {
                 Text("30 minutes").tag(30)
                 Text("1 hour").tag(60)
@@ -72,9 +74,9 @@ struct SettingsView: View {
                 }
             }
         } header: {
-            Text("The day")
+            SectionHeading("The day")
         } footer: {
-            Text("""
+            SectionNote("""
                 Your first slot runs from the moment you start to the next quarter hour. A stub \
                 shorter than the minimum is folded into the following slot instead.
 
@@ -82,26 +84,33 @@ struct SettingsView: View {
                 That is deliberate: a lock you can undo is not a lock.
                 """)
         }
+        .logbookRow()
     }
 
     private var organisationSection: some View {
-        Section("Organisation") {
+        Section {
             NavigationLink {
                 CategoryEditorView()
             } label: {
-                Label("Categories", systemImage: "square.grid.2x2")
+                Text("Categories").font(Theme.serif(15)).foregroundStyle(Theme.ink)
             }
+        } header: {
+            SectionHeading("Organisation")
         }
+        .logbookRow()
     }
 
     private var dataSection: some View {
-        Section("Data") {
+        Section {
             NavigationLink {
                 BackupSettingsView()
             } label: {
-                Label("Backup and export", systemImage: "arrow.up.doc")
+                Text("Backup and export").font(Theme.serif(15)).foregroundStyle(Theme.ink)
             }
+        } header: {
+            SectionHeading("Data")
         }
+        .logbookRow()
     }
 
     // MARK: - Diagnostics
@@ -114,12 +123,12 @@ struct SettingsView: View {
         Section {
             LabeledContent("Notifications") {
                 Text(authorizationLabel)
-                    .foregroundStyle(authorizationStatus == .authorized ? Color.secondary : Color.red)
+                    .foregroundStyle(authorizationStatus == .authorized ? Theme.ink2 : Theme.violet)
             }
             LabeledContent("Prompts scheduled") {
                 Text("\(pendingPromptCount) of \(NotificationScheduler.platformPendingLimit)")
-                    .monospacedDigit()
-                    .foregroundStyle(pendingPromptCount > 60 ? Color.red : Color.secondary)
+                    .font(Theme.mono(13))
+                    .foregroundStyle(pendingPromptCount > 60 ? Theme.violet : Theme.ink2)
             }
             LabeledContent("Window") {
                 Text("\(windowSlots) slots")
@@ -128,10 +137,12 @@ struct SettingsView: View {
             Button("Re-check") {
                 Task { await refreshDiagnostics() }
             }
+            .font(Theme.serif(15))
+            .foregroundStyle(Theme.ink)
         } header: {
-            Text("Diagnostics")
+            SectionHeading("Diagnostics")
         } footer: {
-            Text("""
+            SectionNote("""
                 iOS keeps at most 64 pending notifications, which a full day of three prompts \
                 per slot would exceed several times over. WUUT schedules a rolling window of \
                 the next \(windowSlots) slots and tops it up whenever you use the app or answer \

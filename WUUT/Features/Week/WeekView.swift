@@ -52,8 +52,7 @@ struct WeekView: View {
                 .padding(.vertical, 12)
             }
             .background(Theme.paper)
-            .navigationTitle("Week")
-            .navigationBarTitleDisplayMode(.inline)
+            .logbookBars("Week")
             .navigationDestination(unwrapping: $selectedDay) { day in
                 DayDetailView(day: day)
             }
@@ -74,16 +73,18 @@ struct WeekView: View {
                 weekOffset += 1
             } label: {
                 Image(systemName: "chevron.left").font(.body.weight(.semibold))
+                    .foregroundStyle(Theme.ink)
             }
 
             Spacer()
 
             VStack(spacing: 1) {
                 Text(weekOffset == 0 ? "This week" : weekOffset == 1 ? "Last week" : "\(weekOffset) weeks ago")
-                    .font(.subheadline.weight(.semibold))
+                    .font(Theme.serif(15, .semibold))
+                    .foregroundStyle(Theme.ink)
                 Text(weekRangeLabel)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(Theme.mono(9))
+                    .foregroundStyle(Theme.ink3)
             }
 
             Spacer()
@@ -92,6 +93,7 @@ struct WeekView: View {
                 weekOffset -= 1
             } label: {
                 Image(systemName: "chevron.right").font(.body.weight(.semibold))
+                    .foregroundStyle(weekOffset == 0 ? Theme.ink3 : Theme.ink)
             }
             .disabled(weekOffset == 0)
         }
@@ -188,14 +190,12 @@ struct WeekView: View {
 
     private var emptyWeek: some View {
         VStack(spacing: 10) {
-            Image(systemName: "chart.bar")
-                .font(.system(size: 36))
-                .foregroundStyle(.tertiary)
             Text("Nothing logged this week")
-                .font(.subheadline.weight(.medium))
+                .font(Theme.serif(18, .semibold))
+                .foregroundStyle(Theme.ink)
             Text("Start a day on the Today tab and this fills in.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(Theme.serif(13))
+                .foregroundStyle(Theme.ink2)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 50)
@@ -210,28 +210,22 @@ struct WeekView: View {
                 Text(Formatters.percent(fraction))
                     .font(Theme.serif(40, .bold))
                     .foregroundStyle(Theme.ink)
-                Text("accounted for")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Marginalia("accounted for", color: Theme.ink2)
             }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(Formatters.duration(minutes: logged))
-                    .font(.title3.weight(.semibold))
-                    .monospacedDigit()
-                Text("logged")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(Theme.mono(16, .bold))
+                    .foregroundStyle(Theme.ink)
+                Marginalia("logged", color: Theme.ink2)
             }
 
             if unaccounted > 0 {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(Formatters.duration(minutes: unaccounted))
-                        .font(.title3.weight(.semibold))
-                        .monospacedDigit()
-                    Text("unaccounted")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(Theme.mono(16, .bold))
+                        .foregroundStyle(Theme.violet)
+                    Marginalia("unaccounted", color: Theme.violet)
                 }
             }
 
@@ -267,18 +261,19 @@ struct WeekView: View {
             ])
             .chartYAxis {
                 AxisMarks { value in
-                    AxisGridLine().foregroundStyle(.quaternary)
+                    AxisGridLine().foregroundStyle(Theme.ruleFaint)
                     AxisValueLabel {
                         if let minutes = value.as(Int.self) {
                             Text(Formatters.duration(minutes: minutes))
-                                .font(.caption2)
+                                .font(Theme.mono(8))
+                                .foregroundStyle(Theme.ink3)
                         }
                     }
                 }
             }
             .chartXAxis {
                 AxisMarks { _ in
-                    AxisValueLabel().font(.caption2)
+                    AxisValueLabel().font(Theme.mono(9)).foregroundStyle(Theme.ink2)
                 }
             }
             .chartLegend(position: .bottom, spacing: 8)
@@ -292,19 +287,20 @@ struct WeekView: View {
                     } label: {
                         HStack {
                             Text(Formatters.longDate(stat.date))
-                                .font(.footnote)
+                                .font(Theme.serif(13))
+                                .foregroundStyle(Theme.ink)
                             Spacer()
                             if stat.elapsedMinutes == 0 {
                                 Text("—")
-                                    .font(.footnote)
-                                    .foregroundStyle(.tertiary)
+                                    .font(Theme.mono(11))
+                                    .foregroundStyle(Theme.ink3)
                             } else {
                                 Text(Formatters.duration(minutes: stat.loggedMinutes))
-                                    .font(.footnote.weight(.medium))
-                                    .monospacedDigit()
+                                    .font(Theme.mono(11, .bold))
+                                    .foregroundStyle(Theme.ink)
                                 Image(systemName: "chevron.right")
                                     .font(.caption2.weight(.bold))
-                                    .foregroundStyle(.tertiary)
+                                    .foregroundStyle(Theme.ink3)
                             }
                         }
                         .padding(.vertical, 8)
@@ -372,12 +368,12 @@ struct WeekView: View {
                 ForEach(tags, id: \.key) { tag in
                     HStack {
                         Text("#\(tag.key)")
-                            .font(.footnote)
+                            .font(Theme.mono(11))
+                            .foregroundStyle(Theme.ink2)
                         Spacer()
                         Text(Formatters.duration(minutes: tag.minutes))
-                            .font(.footnote.weight(.medium))
-                            .monospacedDigit()
-                            .foregroundStyle(.secondary)
+                            .font(Theme.mono(11, .bold))
+                            .foregroundStyle(Theme.ink)
                     }
                 }
             }
@@ -414,25 +410,28 @@ private struct CategoryTotalRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             HStack(spacing: 6) {
+                Rectangle()
+                    .fill(color)
+                    .frame(width: 9, height: 9)
                 Image(systemName: symbolName)
-                    .font(.caption)
-                    .foregroundStyle(color)
-                    .frame(width: 16)
+                    .font(.caption2)
+                    .foregroundStyle(Theme.ink2)
+                    .frame(width: 14)
                 Text(name)
-                    .font(.footnote.weight(.medium))
+                    .font(Theme.serif(13))
+                    .foregroundStyle(Theme.ink)
                 Spacer()
                 Text(Formatters.duration(minutes: minutes))
-                    .font(.footnote.weight(.semibold))
-                    .monospacedDigit()
+                    .font(Theme.mono(11, .bold))
+                    .foregroundStyle(Theme.ink)
                 Text(Formatters.percent(share))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
+                    .font(Theme.mono(9))
+                    .foregroundStyle(Theme.ink3)
                     .frame(width: 34, alignment: .trailing)
             }
 
             GeometryReader { geometry in
-                Capsule()
+                Rectangle()
                     .fill(color)
                     .frame(width: max(2, geometry.size.width * fraction))
             }

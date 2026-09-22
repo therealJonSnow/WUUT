@@ -64,11 +64,11 @@ struct RootView: View {
 
     private func storeFailureBanner(_ message: String) -> some View {
         Text(message)
-            .font(.footnote)
-            .foregroundStyle(.white)
+            .font(Theme.serif(13))
+            .foregroundStyle(Theme.card)
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.red)
+            .background(Theme.ink)
             .transition(.move(edge: .top))
     }
 }

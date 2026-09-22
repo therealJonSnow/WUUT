@@ -31,11 +31,12 @@ struct CatchUpSheet: View {
                     allDone
                 }
             }
-            .navigationTitle("Catch up")
-            .navigationBarTitleDisplayMode(.inline)
+            .logbookBars("Catch up")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") { dismiss() }
+                        .font(Theme.serif(15))
+                        .foregroundStyle(Theme.ink2)
                 }
             }
         }
@@ -48,9 +49,13 @@ struct CatchUpSheet: View {
                     header(for: slot)
 
                     TextField("What were you up to?", text: $text, axis: .vertical)
+                        .font(Theme.serif(16))
+                        .foregroundStyle(Theme.ink)
                         .lineLimit(1...3)
-                        .textFieldStyle(.roundedBorder)
                         .focused($textFocused)
+                        .padding(12)
+                        .background(Theme.card)
+                        .overlay(Rectangle().strokeBorder(Theme.rule, lineWidth: 1))
 
                     if let previous = dayController.previousLoggedSlot(before: slot),
                        let previousText = previous.text {
@@ -58,13 +63,19 @@ struct CatchUpSheet: View {
                             dayController.copyPrevious(into: slot, source: .backfill, now: .now)
                             advance()
                         } label: {
-                            Label("Same as previous — \(previousText)", systemImage: "arrow.turn.up.left")
-                                .font(.subheadline)
-                                .lineLimit(1)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.vertical, 10)
+                            HStack(spacing: 8) {
+                                Image(systemName: "arrow.turn.up.left").font(.caption)
+                                Text(previousText)
+                                    .font(Theme.serif(14))
+                                    .lineLimit(1)
+                                Spacer()
+                            }
+                            .foregroundStyle(Theme.ink2)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 11)
+                            .overlay(Rectangle().strokeBorder(Theme.rule, lineWidth: 1))
                         }
-                        .buttonStyle(.bordered)
+                        .buttonStyle(.plain)
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
@@ -91,14 +102,12 @@ struct CatchUpSheet: View {
                     .font(Theme.mono(19, .bold))
                     .foregroundStyle(Theme.ink)
                 Spacer()
-                Text(queue.count == 1 ? "1 left" : "\(queue.count) left")
-                    .font(.footnote.weight(.medium))
-                    .foregroundStyle(.secondary)
+                Marginalia(queue.count == 1 ? "1 left" : "\(queue.count) left",
+                           color: Theme.ink2, weight: .bold)
             }
             Text("Struck out at \(Formatters.time(slot.lockDate(backfillWindowMinutes: AppSettings.shared.backfillWindowMinutes)))")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-                .monospacedDigit()
+                .font(Theme.mono(10))
+                .foregroundStyle(Theme.ink3)
         }
     }
 
@@ -108,7 +117,8 @@ struct CatchUpSheet: View {
                 skipped.insert(slot.id)
                 reset()
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(LedgerButtonStyle(filled: false))
+            .frame(width: 96)
 
             Button {
                 let saved = dayController.log(
@@ -122,27 +132,23 @@ struct CatchUpSheet: View {
                 if saved { advance() }
             } label: {
                 Text("Save and next")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 4)
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(LedgerButtonStyle())
             .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
         .padding(16)
-        .background(.bar)
+        .background(Theme.card)
+        .overlay(alignment: .top) { Rule(color: Theme.ink) }
     }
 
     private var allDone: some View {
         VStack(spacing: 14) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(.green)
             Text("All caught up")
-                .font(.title3.weight(.semibold))
+                .font(Theme.serif(24, .semibold))
+                .foregroundStyle(Theme.ink)
             Text("Nothing is waiting on you.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(Theme.serif(14))
+                .foregroundStyle(Theme.ink2)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.paper)

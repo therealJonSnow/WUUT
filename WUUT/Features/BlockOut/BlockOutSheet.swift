@@ -35,14 +35,17 @@ struct BlockOutSheet: View {
             Form {
                 Section {
                     TextField("What are you doing?", text: $text)
+                        .font(Theme.serif(16))
+                        .foregroundStyle(Theme.ink)
                         .focused($textFocused)
                 } header: {
-                    Text("Activity")
+                    SectionHeading("Activity")
                 } footer: {
-                    Text("Every slot in the block is filled with this. You can change any of them afterwards.")
+                    SectionNote("Every slot in the block is written with this. A block is a prediction, not a claim — you can overwrite any of them afterwards.")
                 }
+                .logbookRow()
 
-                Section("Duration") {
+                Section {
                     Picker("Duration", selection: Binding(
                         get: { usingCustom ? -1 : minutes },
                         set: { value in
@@ -60,6 +63,7 @@ struct BlockOutSheet: View {
                         Text("Custom").tag(-1)
                     }
                     .pickerStyle(.segmented)
+                    .tint(Theme.ink)
 
                     if usingCustom {
                         Stepper(
@@ -70,24 +74,35 @@ struct BlockOutSheet: View {
                         )
                     }
 
-                    LabeledContent("Ends at") {
+                    LabeledContent {
                         Text(Formatters.time(endsAt))
-                            .monospacedDigit()
+                            .font(Theme.mono(13, .bold))
+                            .foregroundStyle(Theme.ink)
+                    } label: {
+                        Marginalia("Ends at", color: Theme.ink2)
                     }
+                } header: {
+                    SectionHeading("Duration")
                 }
+                .logbookRow()
 
-                Section("Category") {
+                Section {
                     CategoryPicker(
                         categories: dayController.activeCategories(),
                         selection: $selectedCategory
                     )
+                } header: {
+                    SectionHeading("Category")
                 }
+                .logbookRow()
             }
-            .navigationTitle("Block out")
-            .navigationBarTitleDisplayMode(.inline)
+            .logbookSurface()
+            .logbookBars("Block out")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .font(Theme.serif(15))
+                        .foregroundStyle(Theme.ink2)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Block") {
@@ -99,6 +114,8 @@ struct BlockOutSheet: View {
                         )
                         dismiss()
                     }
+                    .font(Theme.serif(15, .semibold))
+                    .foregroundStyle(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Theme.ink3 : Theme.ink)
                     .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }

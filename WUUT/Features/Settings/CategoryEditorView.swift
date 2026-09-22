@@ -31,27 +31,41 @@ struct CategoryEditorView: View {
                         CategoryDetailView(category: category)
                     } label: {
                         HStack(spacing: 10) {
+                            Rectangle()
+                                .fill(category.color)
+                                .frame(width: 10, height: 10)
                             Image(systemName: category.symbolName)
-                                .foregroundStyle(category.color)
-                                .frame(width: 22)
+                                .font(.caption)
+                                .foregroundStyle(Theme.ink2)
+                                .frame(width: 18)
                             Text(category.name)
+                                .font(Theme.serif(15))
+                                .foregroundStyle(Theme.ink)
                         }
                     }
                 }
                 .onMove(perform: move)
             } header: {
-                Text("Categories")
+                SectionHeading("Categories")
             } footer: {
-                Text("Drag to reorder. Order sets how they appear when you're logging, so put the ones you use most at the top.")
+                SectionNote("Drag to reorder. Order sets how they appear when you're logging, so put the ones you use most at the top.")
             }
+            .logbookRow()
 
-            Section("Add") {
+            Section {
                 HStack {
                     TextField("New category", text: $newName)
+                        .font(Theme.serif(15))
+                        .foregroundStyle(Theme.ink)
                     Button("Add") { add() }
+                        .font(Theme.serif(15, .semibold))
+                        .foregroundStyle(newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Theme.ink3 : Theme.ink)
                         .disabled(newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
+            } header: {
+                SectionHeading("Add")
             }
+            .logbookRow()
 
             if !archived.isEmpty {
                 Section {
@@ -62,7 +76,8 @@ struct CategoryEditorView: View {
                                     .foregroundStyle(.tertiary)
                                     .frame(width: 22)
                                 Text(category.name)
-                                    .foregroundStyle(.secondary)
+                                    .font(Theme.serif(15))
+                                    .foregroundStyle(Theme.ink3)
                                 Spacer()
                                 Button("Restore") {
                                     category.isArchived = false
@@ -75,14 +90,16 @@ struct CategoryEditorView: View {
                         Button("Show \(archived.count) archived") { showArchived = true }
                     }
                 } header: {
-                    Text("Archived")
+                    SectionHeading("Archived")
                 } footer: {
-                    Text("Archived categories stay attached to the entries that used them, so old weeks still read correctly.")
+                    SectionNote("Archived categories stay attached to the entries that used them, so old weeks still read correctly.")
                 }
+                .logbookRow()
             }
         }
-        .navigationTitle("Categories")
-        .toolbar { EditButton() }
+        .logbookSurface()
+        .logbookBars("Categories")
+        .toolbar { EditButton().foregroundStyle(Theme.ink) }
     }
 
     private func move(from source: IndexSet, to destination: Int) {
@@ -131,34 +148,36 @@ private struct CategoryDetailView: View {
 
     var body: some View {
         Form {
-            Section("Name") {
+            Section {
                 TextField("Name", text: $category.name)
+                    .font(Theme.serif(16))
+                    .foregroundStyle(Theme.ink)
+            } header: {
+                SectionHeading("Name")
             }
+            .logbookRow()
 
-            Section("Colour") {
+            Section {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 44), spacing: 10)], spacing: 10) {
                     ForEach(Array(DefaultCategories.all.enumerated()), id: \.offset) { _, spec in
                         let isSelected = category.colorHex.caseInsensitiveCompare(spec.colorHex) == .orderedSame
                         Button {
                             category.colorHex = spec.colorHex
-                            category.colorHexDark = spec.colorHexDark
+                            category.colorHexDark = spec.colorHex
                         } label: {
-                            Circle()
+                            Rectangle()
                                 .fill(Color(hex: spec.colorHex))
-                                .frame(width: 34, height: 34)
-                                .overlay {
-                                    if isSelected {
-                                        Image(systemName: "checkmark")
-                                            .font(.caption.weight(.bold))
-                                            .foregroundStyle(.white)
-                                    }
-                                }
+                                .frame(width: 32, height: 32)
+                                .overlay(Rectangle().strokeBorder(Theme.ink, lineWidth: isSelected ? 2.5 : 0))
                         }
                         .buttonStyle(.plain)
                     }
                 }
                 .padding(.vertical, 4)
+            } header: {
+                SectionHeading("Colour")
             }
+            .logbookRow()
 
             Section {
                 LazyVGrid(columns: columns, spacing: 10) {
@@ -169,36 +188,40 @@ private struct CategoryDetailView: View {
                             Image(systemName: symbol)
                                 .font(.body)
                                 .frame(width: 38, height: 38)
-                                .background(
-                                    category.symbolName == symbol
-                                        ? category.color.opacity(0.22)
-                                        : Color.secondary.opacity(0.1),
-                                    in: RoundedRectangle(cornerRadius: 9)
-                                )
-                                .foregroundStyle(category.symbolName == symbol ? category.color : Color.secondary)
+                                .background(category.symbolName == symbol ? Theme.paper : Theme.card)
+                                .overlay(Rectangle().strokeBorder(
+                                    category.symbolName == symbol ? Theme.ink : Theme.rule,
+                                    lineWidth: category.symbolName == symbol ? 1.5 : 1))
+                                .foregroundStyle(category.symbolName == symbol ? Theme.ink : Theme.ink2)
                         }
                         .buttonStyle(.plain)
                     }
                 }
                 .padding(.vertical, 4)
             } header: {
-                Text("Symbol")
+                SectionHeading("Symbol")
             } footer: {
-                Text("The symbol is how a category is identified in charts, not just its colour — so pick one you'll recognise.")
+                SectionNote("The symbol is how a category is identified, not just its colour — fourteen colours cannot be told apart, so pick one you'll recognise.")
             }
+            .logbookRow()
 
             Section {
-                Button("Archive this category", role: .destructive) {
+                Button {
                     category.isArchived = true
                     try? context.save()
                     dismiss()
+                } label: {
+                    Text("Archive this category")
+                        .font(Theme.serif(15))
+                        .foregroundStyle(Theme.violet)
                 }
             } footer: {
-                Text("Archiving hides it when logging but leaves every past entry intact.")
+                SectionNote("Archiving hides it when logging but leaves every past entry intact.")
             }
+            .logbookRow()
         }
-        .navigationTitle(category.name)
-        .navigationBarTitleDisplayMode(.inline)
+        .logbookSurface()
+        .logbookBars(category.name)
         .onDisappear { try? context.save() }
     }
 }

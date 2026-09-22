@@ -38,8 +38,7 @@ struct DayDetailView: View {
             .padding(.vertical, 12)
         }
         .background(Theme.paper)
-        .navigationTitle(Formatters.longDate(day.date))
-        .navigationBarTitleDisplayMode(.inline)
+        .logbookBars(Formatters.longDate(day.date))
         .sheet(unwrapping: $editingSlot) { slot in
             LogSheet(slot: slot, now: now)
         }
@@ -51,28 +50,33 @@ struct DayDetailView: View {
                 Text(Formatters.percent(day.accountedFraction))
                     .font(Theme.serif(34, .bold))
                     .foregroundStyle(Theme.ink)
-                Text("accounted for")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                Marginalia("accounted for", color: Theme.ink2)
                 Spacer()
             }
 
             HStack(spacing: 14) {
-                Label(Formatters.duration(minutes: day.loggedMinutes), systemImage: "checkmark.circle.fill")
-                    .font(.caption)
-                    .foregroundStyle(.green)
+                HStack(spacing: 5) {
+                    Rectangle().fill(Theme.ink).frame(width: 8, height: 8)
+                    Text(Formatters.duration(minutes: day.loggedMinutes))
+                        .font(Theme.mono(11, .bold))
+                        .foregroundStyle(Theme.ink)
+                    Marginalia("logged", color: Theme.ink2, size: 8)
+                }
                 if day.unaccountedMinutes > 0 {
-                    Label(Formatters.duration(minutes: day.unaccountedMinutes), systemImage: "lock.fill")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    HStack(spacing: 5) {
+                        Rectangle().fill(Theme.violet).frame(width: 8, height: 8)
+                        Text(Formatters.duration(minutes: day.unaccountedMinutes))
+                            .font(Theme.mono(11, .bold))
+                            .foregroundStyle(Theme.violet)
+                        Marginalia("unaccounted", color: Theme.violet, size: 8)
+                    }
                 }
             }
 
             if let started = day.startedAt, let ended = day.endedAt {
                 Text("\(Formatters.time(started)) – \(Formatters.time(ended))\(day.endedAutomatically ? " · ended automatically" : "")")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .monospacedDigit()
+                    .font(Theme.mono(10))
+                    .foregroundStyle(Theme.ink3)
             }
         }
         .padding(16)

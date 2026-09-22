@@ -159,7 +159,7 @@ public final class NotificationScheduler {
                 calendar: calendar
             )
             content.title = "Last call"
-            content.body = "\(window) locks at \(lockTime)"
+            content.body = "\(window) is struck out at \(lockTime)"
         }
 
         content.categoryIdentifier = Self.promptCategoryIdentifier

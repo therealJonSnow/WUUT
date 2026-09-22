@@ -50,6 +50,9 @@ targets:
       # to be identical on both sides or ActivityKit cannot decode it.
       - path: WUUT/Shared/ActivityAttributes.swift
       - path: WUUT/Shared/Formatters.swift
+      # Tokens only — Theme.swift is deliberately free of model references so the
+      # Live Activity can wear the same paper as the app.
+      - path: WUUT/Shared/Theme.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.wuut.app.widgets

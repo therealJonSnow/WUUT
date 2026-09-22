@@ -52,72 +52,87 @@ struct BackupSettingsView: View {
                     Button {
                         present(.backupFolder)
                     } label: {
-                        Label("Choose a backup folder", systemImage: "folder.badge.plus")
+                        Text("Choose a backup folder")
+                            .font(Theme.serif(15, .semibold))
+                            .foregroundStyle(Theme.ink)
                     }
                 } else {
-                    LabeledContent("Folder") {
-                        Text("Chosen").foregroundStyle(.secondary)
+                    LabeledContent {
+                        Text("Chosen").font(Theme.mono(12)).foregroundStyle(Theme.ink2)
+                    } label: {
+                        Marginalia("Folder", color: Theme.ink2)
                     }
-                    LabeledContent("Last backup") {
-                        Text(lastBackupLabel).foregroundStyle(.secondary)
+                    LabeledContent {
+                        Text(lastBackupLabel).font(Theme.mono(12)).foregroundStyle(Theme.ink2)
+                    } label: {
+                        Marginalia("Last backup", color: Theme.ink2)
                     }
                     Button("Back up now") { backUpNow() }
                     Button("Choose a different folder") { present(.backupFolder) }
-                    Button("Stop backing up", role: .destructive) {
+                    Button {
                         backup.forgetBackupFolder()
                         hasFolder = false
+                    } label: {
+                        Text("Stop backing up")
+                            .font(Theme.serif(15))
+                            .foregroundStyle(Theme.violet)
                     }
                 }
             } header: {
-                Text("Automatic weekly backup")
+                SectionHeading("Automatic weekly backup")
             } footer: {
-                Text("""
+                SectionNote("""
                     Pick a folder in iCloud Drive and WUUT writes a dated JSON file into it once \
                     a week, keeping the last eight. It needs a folder you choose rather than \
                     iCloud sync, because iCloud sync requires a paid developer account.
                     """)
             }
+            .logbookRow()
 
             Section {
                 Button {
                     prepareExport()
                 } label: {
-                    Label("Prepare an export", systemImage: "square.and.arrow.up")
+                    Text("Prepare an export").font(Theme.serif(15)).foregroundStyle(Theme.ink)
                 }
 
                 if let exportURL {
                     ShareLink(item: exportURL) {
-                        Label("Share \(exportURL.lastPathComponent)", systemImage: "paperplane")
+                        Text("Share \(exportURL.lastPathComponent)")
+                            .font(Theme.mono(12))
+                            .foregroundStyle(Theme.ink)
                     }
                 }
             } header: {
-                Text("Export")
+                SectionHeading("Export")
             } footer: {
-                Text("A versioned JSON file containing every day, slot, category and tag.")
+                SectionNote("A versioned JSON file containing every day, slot, category and tag.")
             }
+            .logbookRow()
 
             Section {
                 Button {
                     present(.importFile)
                 } label: {
-                    Label("Import a backup", systemImage: "square.and.arrow.down")
+                    Text("Import a backup").font(Theme.serif(15)).foregroundStyle(Theme.ink)
                 }
             } header: {
-                Text("Import")
+                SectionHeading("Import")
             } footer: {
-                Text("Merges by identifier, so importing a backup never overwrites or duplicates what you already have.")
+                SectionNote("Merges by identifier, so importing a backup never overwrites or duplicates what you already have.")
             }
 
             if let message {
                 Section {
                     Text(message)
-                        .font(.footnote)
-                        .foregroundStyle(isError ? Color.red : Color.secondary)
+                        .font(Theme.serif(13))
+                        .foregroundStyle(isError ? Theme.violet : Theme.ink2)
                 }
+                .logbookRow()
             }
         }
-        .navigationTitle("Backup")
-        .navigationBarTitleDisplayMode(.inline)
+        .logbookSurface()
+        .logbookBars("Backup")
         .fileImporter(
             isPresented: $isPickerPresented,
             allowedContentTypes: pickerMode.contentTypes

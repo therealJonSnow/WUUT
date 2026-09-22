@@ -25,11 +25,6 @@ extension Color {
     }
 }
 
-extension LogCategory {
-    /// Light appearance only. See `Theme` on why there is no dark variant.
-    var color: Color { Color(hex: colorHex) }
-}
-
 /// The Logbook palette.
 ///
 /// WUUT is a ledger, not a diary — its own spec says so — and it is drawn like one: soft
@@ -102,6 +97,74 @@ struct Hatching: View {
             context.stroke(path, with: .color(color), lineWidth: lineWidth)
         }
         .allowsHitTesting(false)
+    }
+}
+
+// MARK: - Chrome
+//
+// Applied everywhere rather than per-screen, because the thing that made the app look
+// generic was not any one view — it was twenty views each quietly accepting the defaults.
+
+extension View {
+
+    /// A `Form` or `List` on the page: hides the system grouped background so the paper
+    /// shows through. Without this a Form insists on `systemGroupedBackground` whatever
+    /// you put behind it.
+    func logbookSurface() -> some View {
+        self
+            .scrollContentBackground(.hidden)
+            .background(Theme.paper)
+    }
+
+    /// A row on a leaf of paper rather than a grey card.
+    func logbookRow() -> some View {
+        self.listRowBackground(Theme.card)
+    }
+
+    /// Navigation chrome in the page's own colours.
+    func logbookBars(_ title: String = "") -> some View {
+        self
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Theme.paper, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+    }
+}
+
+/// A section heading in the ledger's voice: tracked small caps, not a system header.
+struct SectionHeading: View {
+    let text: String
+    init(_ text: String) { self.text = text }
+    var body: some View {
+        Marginalia(text, color: Theme.ink2, weight: .bold)
+            .padding(.top, 4)
+    }
+}
+
+/// Explanatory text under a section. Serif, because it is prose.
+struct SectionNote: View {
+    let text: String
+    init(_ text: String) { self.text = text }
+    var body: some View {
+        Text(text)
+            .font(Theme.serif(12))
+            .foregroundStyle(Theme.ink3)
+    }
+}
+
+/// The app's button: a flat ink block. Nothing in this app is a rounded blue capsule.
+struct LedgerButtonStyle: ButtonStyle {
+    var filled: Bool = true
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(Theme.serif(16, .semibold))
+            .foregroundStyle(filled ? Theme.card : Theme.ink)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 13)
+            .frame(maxWidth: .infinity)
+            .background(filled ? Theme.ink : Theme.card)
+            .overlay(Rectangle().strokeBorder(Theme.ink, lineWidth: filled ? 0 : 1))
+            .opacity(configuration.isPressed ? 0.75 : 1)
     }
 }
 
