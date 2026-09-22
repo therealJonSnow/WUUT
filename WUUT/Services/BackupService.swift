@@ -224,6 +224,12 @@ public final class BackupService {
     // MARK: - The weekly backup
 
     public func rememberBackupFolder(_ url: URL) throws {
+        // A folder handed over by the document picker arrives security-scoped, and the scope
+        // has to be open to mint a bookmark from it — otherwise this throws and the folder
+        // never gets remembered.
+        let needsScope = url.startAccessingSecurityScopedResource()
+        defer { if needsScope { url.stopAccessingSecurityScopedResource() } }
+
         let bookmark = try url.bookmarkData(
             options: [],
             includingResourceValuesForKeys: nil,
