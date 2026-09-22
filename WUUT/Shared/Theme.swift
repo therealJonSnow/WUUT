@@ -186,6 +186,23 @@ struct Marginalia: View {
     var size: CGFloat = 9
     var weight: Font.Weight = .regular
 
+    /// Spelled out rather than left to the memberwise init, which would demand a `text:`
+    /// label that no call site uses. It has to live here rather than beside a view: this
+    /// file is compiled into the widget extension too, and the extension that used to
+    /// supply it sat in SlotRow.swift, which the extension does not compile — so the Live
+    /// Activity failed to build while the app was fine.
+    init(
+        _ text: String,
+        color: Color = Theme.ink2,
+        size: CGFloat = 9,
+        weight: Font.Weight = .regular
+    ) {
+        self.text = text
+        self.color = color
+        self.size = size
+        self.weight = weight
+    }
+
     var body: some View {
         Text(text.uppercased())
             .font(Theme.mono(size, weight))

@@ -189,12 +189,6 @@ struct SlotRow: View {
     }
 }
 
-extension Marginalia {
-    init(_ text: String, color: Color = Theme.ink2, size: CGFloat = 9, weight: Font.Weight = .regular) {
-        self.init(text: text, color: color, size: size, weight: weight)
-    }
-}
-
 /// The category mark used outside the ledger — in sheets and pickers, where there is room
 /// for the name to sit beside the colour rather than under it.
 struct CategoryChip: View {
