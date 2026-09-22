@@ -25,7 +25,28 @@ fi
 
 if [ "$MODE" = "test" ]; then
   # A simulator, because unit tests don't need the phone and don't need signing.
-  DESTINATION="platform=iOS Simulator,name=iPhone 16"
+  #
+  # Resolved by id rather than pinned by name. A bare 'name=iPhone 16' is matched
+  # against OS:latest, so it stops resolving the day Xcode ships a runtime with no
+  # iPhone 16 on it — which Xcode 27 did, its newest simulators being the 17 and 18.
+  # Prefer a booted device if there is one, else the last iPhone the scheme lists,
+  # which is the newest runtime. Override with WUUT_SIM_ID if you want a specific one.
+  DESTINATION_ID="${WUUT_SIM_ID:-}"
+  if [ -z "$DESTINATION_ID" ]; then
+    DESTINATION_ID=$(xcrun simctl list devices available 2>/dev/null \
+      | grep -E "^[[:space:]]+iPhone" | grep "(Booted)" | head -1 \
+      | sed -E 's/.*\(([0-9A-F-]{36})\).*/\1/')
+  fi
+  if [ -z "$DESTINATION_ID" ]; then
+    DESTINATION_ID=$(xcodebuild -project "$PROJECT" -scheme "$SCHEME" -showdestinations 2>/dev/null \
+      | grep "platform:iOS Simulator" | grep "name:iPhone" \
+      | sed -E 's/.*id:([0-9A-F-]{36}).*/\1/' | tail -1)
+  fi
+  if [ -z "$DESTINATION_ID" ]; then
+    echo "No iOS simulator available. Open Xcode and install a simulator runtime." >&2
+    exit 1
+  fi
+  DESTINATION="id=$DESTINATION_ID"
   ACTION="test"
 else
   # 'generic/platform=iOS' compiles for device without one being plugged in.
