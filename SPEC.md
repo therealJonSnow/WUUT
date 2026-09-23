@@ -503,6 +503,13 @@ where every bug that would corrupt your history would live.
 
 ## 11. Deferred
 
+**The web harness** (`web/`) is not a port and is not on a path to becoming one. It renders
+the same screens from the same tokens so the Figma pipeline has a live URL to capture — the
+pixel-perfect capture tool is web-only, and constructing an iOS design node by node from a
+description is exactly what produced a Figma file that did not match the app. The app's
+central mechanic cannot be reproduced there anyway: the web has no way to interrupt you once
+the tab is closed without a push server, which local-only data forbids.
+
 **Free, later:** a proper dark mode — paper at night designed from scratch, not an inversion,
 with the redaction treatment re-solved since a dark block on a dark ground disappears;
 App Intents so Siri and Shortcuts can log a slot; hour-of-day patterns and

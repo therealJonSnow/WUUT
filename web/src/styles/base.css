@@ -1,0 +1,157 @@
+/* The Logbook, in CSS. Mirrors WUUT/Shared/Theme.swift — see SPEC.md §7.7.
+ *
+ * Two rules carry the design:
+ *   Violet is reserved for the ruling and for unaccounted time. Nothing else may use it.
+ *   Logged time is quiet, unaccounted time is loud. Never make missing time recessive.
+ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #e9e5db;
+  color: var(--ink);
+  font-family: var(--font-serif);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- harness chrome (not part of the app) ---- */
+.harness { padding: 32px; }
+.harness__bar {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  margin-bottom: 24px; font-family: var(--font-mono); font-size: 12px; color: #55503f;
+}
+.harness__bar strong { font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.harness__bar button, .harness__bar label {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 7px 11px; border: 1px solid var(--rule); background: var(--card);
+  color: var(--ink); cursor: pointer;
+}
+.harness__bar button[aria-pressed='true'] { border-color: var(--ink); border-width: 1.5px; font-weight: 700; }
+.harness__screens { display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap; }
+.harness__label {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: #6f6a58; margin-top: 12px;
+}
+.harness__note { font-size: 13px; color: #55503f; max-width: 62ch; line-height: 1.5; }
+
+/* ---- the device frame ---- */
+.screen {
+  width: 393px; height: 852px; overflow: hidden;
+  background: var(--paper); padding: 22px 18px 0;
+  display: flex; flex-direction: column;
+  border: 1px solid #cfc8b6;
+}
+.screen__scroll { overflow: hidden; flex: 1; }
+
+/* ---- primitives ---- */
+.rule { height: 1px; background: var(--rule); }
+.rule--ink { background: var(--ink); }
+.rule--faint { background: var(--rule-faint); }
+
+.marginalia {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.11em;
+  text-transform: uppercase; color: var(--ink-2);
+}
+.marginalia--bold { font-weight: 700; }
+.marginalia--violet { color: var(--violet); }
+.marginalia--tertiary { color: var(--ink-3); }
+
+.mono { font-family: var(--font-mono); font-size: 12px; color: var(--ink-2); }
+.mono--ink { color: var(--ink); }
+.mono--bold { font-weight: 700; }
+.mono--violet { color: var(--violet); font-weight: 700; }
+
+.masthead { display: flex; justify-content: space-between; align-items: baseline; }
+
+/* Diagonal strike-through. In the app this is a Canvas; here a repeating gradient. */
+.hatch {
+  flex: 1; align-self: stretch; margin-left: 12px;
+  background-image: repeating-linear-gradient(
+    -45deg, transparent 0 4px, color-mix(in srgb, var(--violet) 38%, transparent) 4px 5px
+  );
+}
+
+/* ---- header ---- */
+.headline { display: flex; justify-content: space-between; align-items: flex-start; padding-top: 18px; }
+.figure { display: flex; align-items: baseline; gap: 4px; }
+.figure__number { font-size: 52px; font-weight: 700; line-height: 1; letter-spacing: -0.01em; }
+.figure__number--small { font-size: 34px; }
+.figure__percent { font-size: 24px; color: var(--ink-2); }
+.figure__label { font-size: 13px; color: var(--ink-2); margin-left: 6px; }
+
+.lost { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; padding-top: 6px; }
+.lost__amount { font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: var(--violet); }
+.chip {
+  background: var(--violet); color: var(--card); padding: 2px 5px;
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.11em; text-transform: uppercase;
+}
+
+/* ---- accounted bar: the app's signature object ---- */
+.bar { display: flex; height: 18px; margin-top: 16px; }
+.bar__logged { background: var(--ink); }
+.bar__lost {
+  background: var(--violet);
+  background-image: repeating-linear-gradient(
+    -45deg, transparent 0 4px, color-mix(in srgb, var(--card) 45%, transparent) 4px 5px
+  );
+}
+.bar__open { border: 1px solid var(--rule); }
+.stats { display: flex; gap: 10px; padding-top: 8px; }
+
+/* ---- the ledger ---- */
+.slot { display: flex; padding: 11px 0; min-height: var(--slot-row-min-height); background: var(--card); }
+.slot__time { width: 92px; flex: 0 0 92px; display: flex; flex-direction: column; gap: 2px; }
+.slot__stub { font-family: var(--font-mono); font-size: 9px; font-weight: 700; color: var(--ink-3); }
+.slot__body { flex: 1; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.slot__text { font-size: 15px; line-height: 1.35; }
+.slot__text--quiet { color: var(--ink-3); }
+.slot__meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.slot__tag { font-family: var(--font-mono); font-size: 9px; color: var(--ink-3); }
+.slot__marker { width: 3px; height: 17px; background: var(--ink); flex: 0 0 3px; }
+.slot__progress { display: flex; gap: 10px; align-items: flex-start; }
+
+/* Unaccounted: the loudest thing on the page, by design. */
+.slot--lost { background: var(--violet-soft); padding: 0; align-items: stretch; min-height: 48px; }
+.slot--lost .slot__edge { width: 4px; flex: 0 0 4px; background: var(--violet); }
+.slot--lost .slot__inner { display: flex; align-items: center; gap: 12px; padding: 0 12px; flex: 1; }
+
+.mark { display: inline-flex; align-items: center; gap: 6px; }
+.mark__swatch { width: 8px; height: 8px; flex: 0 0 8px; }
+
+/* ---- week ---- */
+.section-head { padding-top: 24px; padding-bottom: 10px; }
+.chart { display: flex; justify-content: space-between; align-items: flex-end; padding-top: 14px; height: 156px; }
+.chart__col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.chart__stack { display: flex; flex-direction: column; justify-content: flex-end; width: 22px; height: 132px; }
+.chart__lost {
+  background: var(--violet);
+  background-image: repeating-linear-gradient(
+    0deg, transparent 0 4px, color-mix(in srgb, var(--paper) 50%, transparent) 4px 5px
+  );
+}
+.chart__logged { background: var(--ink); }
+
+.total { padding: 9px 0; display: flex; flex-direction: column; gap: 5px; }
+.total__top { display: flex; align-items: center; gap: 8px; }
+.total__name { flex: 1; font-size: 13px; min-width: 0; }
+.total__dur { font-family: var(--font-mono); font-size: 11px; font-weight: 700; }
+.total__pct { font-family: var(--font-mono); font-size: 9px; color: var(--ink-3); width: 34px; text-align: right; }
+.total__track { height: 4px; }
+
+/* ---- forms (Log entry, Settings) ---- */
+.field { background: var(--card); border: 1px solid var(--rule); padding: 14px 12px; font-size: 15px; }
+.subtle { background: var(--card); border: 1px solid var(--rule); padding: 10px 12px; display: flex; gap: 8px; align-items: center; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.cat {
+  display: flex; align-items: center; gap: 7px; padding: 9px;
+  border: 1px solid var(--rule); background: transparent;
+}
+.cat--on { border: 1.5px solid var(--ink); background: var(--paper); }
+.tagrow { display: flex; gap: 7px; }
+.tagrow span { border: 1px solid var(--rule); padding: 5px 8px; font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2); }
+.card { background: var(--card); border: 1px solid var(--rule); }
+.card__row { display: flex; align-items: center; gap: 8px; padding: 13px 14px; }
+.card__row span:first-child { flex: 1; font-size: 15px; }
+.note { font-size: 12px; color: var(--ink-3); line-height: 1.45; padding-top: 8px; }

@@ -21,3 +21,7 @@ build.log
 
 # Written by scripts/make_icon.py
 icon_preview.png
+
+# Web harness
+web/node_modules/
+web/dist/
